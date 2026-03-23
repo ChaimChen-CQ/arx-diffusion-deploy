@@ -317,6 +317,158 @@ RGB 图像 (B, T, 3, 224, 224)
 
 ---
 
+## 这是 DiT 架构吗？
+
+### 简短回答
+
+**不是严格意义上的 DiT**，但共享了 DiT 的核心思想——用 Transformer 替代 UNet 作为扩散去噪骨干网络。本项目的架构更准确地称为 **"Cross-Attention 条件 Transformer Decoder"**，与 DiT 在关键细节上存在重要区别。
+
+---
+
+### DiT 与本项目架构对比
+
+| 维度 | DiT（Peebles & Xie, 2022） | 本项目 `TransformerForActionDiffusion` |
+|------|--------------------------|--------------------------------------|
+| **任务域** | 图像生成（latent diffusion） | 机器人动作序列生成 |
+| **Transformer 类型** | Encoder（纯自注意力） | **Decoder（自注意力 + 交叉注意力）** |
+| **时间步注入方式** | **adaLN-Zero**（自适应 LayerNorm） | **时间 Token**（正弦编码拼接到条件序列末尾） |
+| **条件注入方式** | adaLN 或 Cross-Attention（图像类别标签） | Cross-Attention（视觉/低维观测 tokens 作为 memory） |
+| **去噪对象** | 噪声图像的 patch token 序列 | 噪声动作序列（16步 × 10维） |
+| **位置编码** | 可学习（patch 空间位置） | 可学习（动作时间位置）+ 正弦（时间步） |
+
+---
+
+### 本项目架构的代码原理详解
+
+#### 1. 去噪 Transformer（`TransformerForActionDiffusion`）
+
+核心设计是将扩散去噪问题建模为 **序列到序列的条件生成**：
+
+```
+输入（Query）：加噪声的动作序列  (B, 16, 10)
+条件（Memory）：观测 tokens + 时间步 token  (B, N+1, 768)
+输出：预测噪声  (B, 16, 10)
+```
+
+**Forward 的完整数据流：**
+
+```python
+# Step 1：时间步 t → 正弦嵌入 → (B, 1, 768)
+time_emb = self.time_emb(timesteps).unsqueeze(1)
+
+# Step 2：拼接条件 tokens，加可学习位置编码
+#   cond (B, N, 768) + time_emb (B, 1, 768) → (B, N+1, 768)
+cond_emb = torch.cat([cond, time_emb], dim=1)
+cond_emb = cond_emb + self.cond_pos_emb[:, :N+1, :]  # 可学习位置编码
+
+# Step 3：动作序列 → 线性投影 + 可学习位置编码
+#   noisy_action (B, 16, 10) → (B, 16, 768)
+input_emb = self.input_emb(sample) + self.pos_emb[:, :T, :]
+
+# Step 4：Transformer Decoder
+#   tgt = 动作嵌入 (B, 16, 768)  → 自注意力（动作帧间关系）
+#   memory = 条件嵌入 (B, N+1, 768) → 交叉注意力（从观测中提取信息）
+x = self.decoder(tgt=input_emb, memory=cond_emb)
+
+# Step 5：LayerNorm + 线性头 → 预测噪声
+x = self.head(self.ln_f(x))  # (B, 16, 10)
+```
+
+> **关键点**：时间步 `t` 不是通过 adaLN 调制 LayerNorm 的参数（DiT 做法），而是直接作为一个额外的 token 拼接到条件序列中，让 Transformer 的交叉注意力机制自行学习如何使用时间信息。
+
+---
+
+#### 2. 为什么用 Decoder 而不是 Encoder？
+
+DiT 用 **Encoder**（自注意力），因为图像 patch 之间是对等关系（空间局部性）。
+
+本项目用 **Decoder**（自注意力 + 交叉注意力），因为：
+- **动作序列（Query）** 与 **视觉观测（Key/Value）** 天然是不同模态、不对等的关系
+- 交叉注意力让每一个动作 token 都能"看"到所有观测 tokens，建立动作与视觉的直接对应
+
+```
+每层 Decoder Block 内部：
+┌─────────────────────────────────────────────┐
+│  LayerNorm                                  │
+│  Self-Attention（动作帧之间的时序关系）         │
+│  LayerNorm                                  │
+│  Cross-Attention（动作 ← 视觉 + 时间条件）     │
+│  LayerNorm                                  │
+│  FFN（GELU，4×768 中间维度）                  │
+└─────────────────────────────────────────────┘
+（norm_first=True：Pre-LN，训练更稳定）
+```
+
+---
+
+#### 3. 训练目标（DDPM epsilon 预测）
+
+```python
+# 训练时对动作加噪（前向扩散）
+noise = torch.randn_like(nactions)
+# input perturbation：额外小扰动，缓解 exposure bias（参考 DDPM-IP）
+noise_new = noise + 0.1 * torch.randn_like(noise)
+
+# 根据时间步 t 加噪
+noisy_action = scheduler.add_noise(nactions, noise_new, t)
+
+# 模型预测原始噪声 ε
+pred_noise = model(noisy_action, t, cond=obs_tokens)
+
+# MSE loss：让预测噪声 ≈ 原始噪声
+loss = F.mse_loss(pred_noise, noise)
+```
+
+加噪公式（DDPM 前向过程）：
+
+\[
+x_t = \sqrt{\bar{\alpha}_t}\, x_0 + \sqrt{1 - \bar{\alpha}_t}\, \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)
+\]
+
+其中 \(\bar{\alpha}_t\) 由 `squaredcos_cap_v2` noise schedule 决定，使噪声在 T=50 步内从 0 平滑增长到 1。
+
+---
+
+#### 4. 推理过程（DDIM 16步加速去噪）
+
+```python
+# 从纯噪声出发
+trajectory = torch.randn(B, 16, 10)
+
+# DDIM 反向去噪（16步，跳步推理）
+for t in scheduler.timesteps:   # t: 50步中均匀选取16个
+    pred_noise = model(trajectory, t, cond=obs_tokens)
+    trajectory = scheduler.step(pred_noise, t, trajectory).prev_sample
+
+# 输出干净的动作序列
+action = normalizer['action'].unnormalize(trajectory)  # (B, 16, 10)
+```
+
+DDIM 去噪公式（无随机性，确定性推理）：
+
+\[
+x_{t-1} = \sqrt{\bar{\alpha}_{t-1}} \cdot \hat{x}_0(x_t) + \sqrt{1 - \bar{\alpha}_{t-1}} \cdot \epsilon_\theta(x_t, t)
+\]
+
+DDIM 相比 DDPM 的优势：训练用 50 步，推理只需 16 步，速度提升约 3×，且动作质量基本不下降。
+
+---
+
+#### 5. 架构总结：与 DiT 的本质联系
+
+本项目架构可以理解为 **"动作域的 DiT 变体"**：
+
+| 概念 | DiT 中的实现 | 本项目中的对应 |
+|------|------------|-------------|
+| 去噪对象的 token 化 | 图像 → patch tokens | 动作序列 → 时间步 tokens |
+| 条件信息注入 | adaLN（调制 LN 参数） | Cross-Attention（通过 Decoder memory） |
+| 时间步编码 | adaLN-Zero 的一部分 | 正弦嵌入 → 拼接为条件 token |
+| 骨干网络 | ViT Encoder | Transformer Decoder |
+
+两者共同的核心洞见：**Transformer 在序列建模上的能力使其比 UNet 更适合处理具有复杂时序依赖的扩散去噪任务**，无论去噪对象是图像 patch 序列还是机器人动作序列。
+
+---
+
 ## 推理与部署
 
 ### 加载检查点进行推理
