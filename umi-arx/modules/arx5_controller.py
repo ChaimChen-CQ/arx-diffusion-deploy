@@ -14,6 +14,7 @@ import numpy.typing as npt
 
 from multiprocessing import Value
 import ctypes
+import threading
 
 
 class Command(enum.Enum):
@@ -203,13 +204,25 @@ class Arx5Controller(mp.Process):
 
     # ========= main loop in process ============
     def run(self):
+        # --- Gen gripper ROS interface ---
+        import rospy
+        from std_msgs.msg import Float32
+        rospy.init_node('arx5_gripper_ctrl', anonymous=True)
+        gripper_pub = rospy.Publisher('/target_distance', Float32, queue_size=1)
+
+        _encoder_val = [0.0]
+        _encoder_lock = threading.Lock()
+
+        def _encoder_cb(msg):
+            with _encoder_lock:
+                _encoder_val[0] = msg.data
+
+        rospy.Subscriber('/encoder', Float32, _encoder_cb)
+        # ---------------------------------
+
         self.robot_client = Arx5Client(self.robot_ip, self.robot_port)
         self.robot_client.reset_to_home()
-        # self.robot_client.set_gain()
         time.sleep(1)
-        # self.robot_client.set_to_damping()
-        # gain = self.robot_client.get_gain()
-        # gain['kd'] = gain['kd'] * 0.2
         gain = self.robot_client.get_gain()
         gain["kp"] = np.array([300, 300, 400, 80, 50, 30])
         self.robot_client.set_gain(gain)
@@ -222,7 +235,8 @@ class Arx5Controller(mp.Process):
             dt = 1 / self.frequency
             self.robot_client.get_state()
             curr_pose = self.robot_client.tcp_pose
-            curr_gripper_pos = self.robot_client.gripper_pos
+            with _encoder_lock:
+                curr_gripper_pos = _encoder_val[0]
             curr_t = time.monotonic()
             last_waypoint_time = curr_t
             pose_interp = PoseTrajectoryInterpolator(
@@ -241,10 +255,15 @@ class Arx5Controller(mp.Process):
                 pose_cmd = pose_interp(t_now)
                 gripper_cmd = float(gripper_pos_interp(t_now)[0])
 
-                self.robot_client.set_tcp_pose(pose_cmd, gripper_cmd)
+                self.robot_client.set_tcp_pose(pose_cmd, 0.0)  # gripper via ROS
+                gripper_pub.publish(Float32(data=float(gripper_cmd)))
                 state = dict()
                 for key, func_name in self.receive_keys:
-                    state[key] = getattr(self.robot_client, func_name)
+                    if func_name == "gripper_pos":
+                        with _encoder_lock:
+                            state[key] = _encoder_val[0]
+                    else:
+                        state[key] = getattr(self.robot_client, func_name)
                 t_recv = time.time()
                 state["robot_receive_timestamp"] = t_recv
                 state["robot_timestamp"] = t_recv - self.receive_latency
@@ -316,7 +335,11 @@ class Arx5Controller(mp.Process):
                         self.ring_buffer.clear()
                         state = dict()
                         for key, func_name in self.receive_keys:
-                            state[key] = getattr(self.robot_client, func_name)
+                            if func_name == "gripper_pos":
+                                with _encoder_lock:
+                                    state[key] = _encoder_val[0]
+                            else:
+                                state[key] = getattr(self.robot_client, func_name)
                         t_recv = time.time()
                         state["robot_receive_timestamp"] = t_recv
                         state["robot_timestamp"] = t_recv - self.receive_latency
@@ -325,7 +348,8 @@ class Arx5Controller(mp.Process):
                             print(f"[Arx5Controller] Reset to home")
 
                         curr_pose = self.robot_client.tcp_pose
-                        curr_gripper_pos = self.robot_client.gripper_pos
+                        with _encoder_lock:
+                            curr_gripper_pos = _encoder_val[0]
                         curr_t = time.monotonic()
                         last_waypoint_time = curr_t
                         pose_interp = PoseTrajectoryInterpolator(

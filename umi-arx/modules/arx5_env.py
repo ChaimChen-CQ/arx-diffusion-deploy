@@ -112,8 +112,8 @@ class Arx5Env:
 
                 transform.append(tf4k)
             else:
-                res = (1920, 1080)
-                fps = 60
+                res = (1600, 1296)  # gen gripper center camera native resolution
+                fps = 30
                 buf = 1
                 bit_rate = 3000 * 1000
 

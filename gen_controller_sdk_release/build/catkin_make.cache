@@ -1,0 +1,2 @@
+robot_driver
+-DCATKIN_DEVEL_PREFIX=/workspace/gen_controller_sdk_release/devel -DCMAKE_INSTALL_PREFIX=/workspace/gen_controller_sdk_release/install -G Unix Makefiles

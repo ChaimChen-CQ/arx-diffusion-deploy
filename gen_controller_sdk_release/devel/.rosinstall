@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /workspace/gen_controller_sdk_release/devel/setup.sh

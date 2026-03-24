@@ -1,0 +1,8 @@
+prefix=/workspace/gen_controller_sdk_release/install
+
+Name: robot_driver
+Description: Description of robot_driver
+Version: 1.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: rospy std_msgs sensor_msgs cv_bridge

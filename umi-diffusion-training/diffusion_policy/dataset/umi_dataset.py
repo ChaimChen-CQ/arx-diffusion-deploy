@@ -26,6 +26,31 @@ from umi.common.pose_util import pose_to_mat, mat_to_pose10d
 
 register_codecs()
 
+
+def _load_replay_buffer(dataset_path: str) -> ReplayBuffer:
+    """Load a ReplayBuffer from .npz, .zip (zarr zip), or zarr directory."""
+    dataset_path = os.path.expanduser(dataset_path)
+    if dataset_path.endswith('.npz'):
+        data, meta = {}, {}
+        with np.load(dataset_path, allow_pickle=False) as archive:
+            for key in archive.files:
+                if key.startswith('data__'):
+                    data[key[len('data__'):]] = archive[key]
+                elif key.startswith('meta__'):
+                    meta[key[len('meta__'):]] = archive[key]
+        return ReplayBuffer({'data': data, 'meta': meta})
+    elif os.path.isdir(dataset_path):
+        from zarr.storage import DirectoryStore
+        src_store = DirectoryStore(dataset_path)
+    else:
+        src_store = zarr.ZipStore(dataset_path, mode='r')
+    with src_store:
+        return ReplayBuffer.copy_from_store(
+            src_store=src_store,
+            store=zarr.MemoryStore()
+        )
+
+
 class UmiDataset(BaseDataset):
     def __init__(self,
         shape_meta: dict,
@@ -42,14 +67,9 @@ class UmiDataset(BaseDataset):
         self.pose_repr = pose_repr
         self.obs_pose_repr = self.pose_repr.get('obs_pose_repr', 'rel')
         self.action_pose_repr = self.pose_repr.get('action_pose_repr', 'rel')
-        
-        if cache_dir is None:
-            # load into memory store
-            with zarr.ZipStore(dataset_path, mode='r') as zip_store:
-                replay_buffer = ReplayBuffer.copy_from_store(
-                    src_store=zip_store, 
-                    store=zarr.MemoryStore()
-                )
+
+        if cache_dir is None or dataset_path.endswith('.npz'):
+            replay_buffer = _load_replay_buffer(dataset_path)
         else:
             # TODO: refactor into a stand alone function?
             # determine path name
@@ -68,15 +88,12 @@ class UmiDataset(BaseDataset):
                 # cache does not exist
                 if not cache_path.exists():
                     try:
-                        with zarr.LMDBStore(str(cache_path),     
+                        with zarr.LMDBStore(str(cache_path),
                             writemap=True, metasync=False, sync=False, map_async=True, lock=False
                             ) as lmdb_store:
-                            with zarr.ZipStore(dataset_path, mode='r') as zip_store:
-                                print(f"Copying data to {str(cache_path)}")
-                                ReplayBuffer.copy_from_store(
-                                    src_store=zip_store,
-                                    store=lmdb_store
-                                )
+                            print(f"Copying data to {str(cache_path)}")
+                            tmp_buf = _load_replay_buffer(dataset_path)
+                            tmp_buf.save_to_store(lmdb_store)
                         print("Cache written to disk!")
                     except Exception as e:
                         shutil.rmtree(cache_path)
