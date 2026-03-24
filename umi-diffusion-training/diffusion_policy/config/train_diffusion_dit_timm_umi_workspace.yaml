@@ -40,6 +40,8 @@ policy:
     model_name: 'vit_base_patch14_dinov2.lvd142m'
     pretrained: True
     frozen: False        # finetune the backbone end-to-end
+    # DINOv2 default is 518×518; override to match our 224×224 dataset
+    img_size: 224
 
     global_pool: ''      # return CLS token (not global-avg-pool)
     feature_aggregation: null   # ViT CLS token needs no extra pooling

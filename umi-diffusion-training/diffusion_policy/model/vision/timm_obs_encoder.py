@@ -68,6 +68,9 @@ class TimmObsEncoder(ModuleAttrMixin):
             feature_aggregation: str='spatial_embedding',
             downsample_ratio: int=32,
             position_encording: str='learnable',
+            # override the input image size expected by the backbone
+            # (e.g. DINOv2 defaults to 518, set to 224 for standard datasets)
+            img_size: int=None,
 
         ):
         """
@@ -83,12 +86,15 @@ class TimmObsEncoder(ModuleAttrMixin):
         key_shape_map = dict()
 
         assert global_pool == ''
-        model = timm.create_model(
+        timm_kwargs = dict(
             model_name=model_name,
             pretrained=pretrained,
-            global_pool=global_pool, # '' means no pooling
-            num_classes=0            # remove classification layer
+            global_pool=global_pool,  # '' means no pooling
+            num_classes=0,            # remove classification layer
         )
+        if img_size is not None:
+            timm_kwargs['img_size'] = img_size
+        model = timm.create_model(**timm_kwargs)
 
         if frozen:
             assert pretrained

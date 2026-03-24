@@ -2,7 +2,8 @@
 Diffusion Policy using DiTForDiffusion backbone + TimmObsEncoder.
 
 Obs encoder (e.g. DINOv2 ViT-B) produces a flat feature vector of shape
-(B, To * n_emb).  The policy reshapes it into (B, To, n_emb) conditioning
+(B, obs_feature_dim), which includes both RGB features and low-dim obs.
+A learned linear projection maps this to (B, n_obs_tokens, n_emb) conditioning
 tokens which are fed to DiT via cross-attention.
 
 Training:
@@ -16,6 +17,7 @@ Inference:
 
 from typing import Dict
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from einops import reduce
@@ -53,15 +55,19 @@ class DiffusionDiTTimmPolicy(BaseImagePolicy):
         action_dim = action_shape[0]
         action_horizon = shape_meta["action"]["horizon"]
 
-        # obs encoder outputs flat (B, obs_feature_dim)
+        # obs encoder outputs flat (B, obs_feature_dim) —
+        # this includes both RGB features AND low-dim obs concatenated.
         obs_feature_dim = int(np.prod(obs_encoder.output_shape()))
-        assert obs_feature_dim % n_emb == 0, (
-            f"obs_feature_dim ({obs_feature_dim}) must be divisible by "
-            f"n_emb ({n_emb}).  Check that your backbone outputs {n_emb}-d "
-            f"features (e.g. DINOv2 / CLIP ViT-B → 768)."
-        )
-        # number of conditioning tokens = To * 1 (one CLS token per timestep)
-        n_obs_tokens = obs_feature_dim // n_emb
+
+        # Project arbitrary obs_feature_dim → n_cond_tokens × n_emb.
+        # n_cond_tokens = To (one token per observation timestep) is a
+        # reasonable default, but we expose it as a configurable parameter.
+        obs_horizon = shape_meta["obs"][
+            next(k for k in shape_meta["obs"] if shape_meta["obs"][k].get("type","low_dim") == "rgb")
+        ]["horizon"]
+        n_obs_tokens = obs_horizon          # one conditioning token per obs step
+
+        self.obs_proj = nn.Linear(obs_feature_dim, n_obs_tokens * n_emb)
 
         model = DiTForDiffusion(
             input_dim=action_dim,
@@ -92,10 +98,11 @@ class DiffusionDiTTimmPolicy(BaseImagePolicy):
     #  Inference                                                           #
     # ------------------------------------------------------------------ #
     def _encode_obs(self, nobs: Dict[str, torch.Tensor]) -> torch.Tensor:
-        """Run obs encoder and reshape to (B, n_obs_tokens, n_emb)."""
-        obs_flat = self.obs_encoder(nobs)           # (B, n_obs_tokens * n_emb)
+        """Run obs encoder + linear projection → (B, n_obs_tokens, n_emb)."""
+        obs_flat = self.obs_encoder(nobs)               # (B, obs_feature_dim)
         B = obs_flat.shape[0]
-        return obs_flat.view(B, self.n_obs_tokens, self.n_emb)
+        obs_proj = self.obs_proj(obs_flat)              # (B, n_obs_tokens * n_emb)
+        return obs_proj.view(B, self.n_obs_tokens, self.n_emb)
 
     def conditional_sample(
         self,
