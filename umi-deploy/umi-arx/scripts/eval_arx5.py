@@ -23,6 +23,7 @@ Press "S" to stop evaluation and gain control back.
 # %%
 import sys
 import os
+import json
 from queue import Queue
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -117,6 +118,102 @@ def solve_sphere_collision(ee_poses, robots_config):
                 )
 
 
+def load_hand_eye_transform(path, direction="eef_to_camera"):
+    """Load fixed extrinsic between ARX TCP/EEF and GenRobot camera0.
+
+    The ARX deployment code controls TCP/EEF, while GenRobot training data uses
+    camera0 optical center as "robot0_eef".  This function returns T_tcp_camera0.
+    """
+    if path is None or str(path).strip().lower() in {"", "none", "null"}:
+        return None
+
+    with open(path, "r") as f:
+        data = json.load(f)
+
+    if "T_tcp_camera0" in data:
+        tx = np.asarray(data["T_tcp_camera0"], dtype=np.float64)
+    elif "T_eef_camera0" in data:
+        tx = np.asarray(data["T_eef_camera0"], dtype=np.float64)
+    elif "R_eef2cam" in data and "t_eef2cam" in data:
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, :3] = np.asarray(data["R_eef2cam"], dtype=np.float64)
+        tx[:3, 3] = np.asarray(data["t_eef2cam"], dtype=np.float64)
+    elif "R_cam2gripper" in data and "t_cam2gripper" in data:
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, :3] = np.asarray(data["R_cam2gripper"], dtype=np.float64)
+        tx[:3, 3] = np.asarray(data["t_cam2gripper"], dtype=np.float64)
+    elif "q_cam2gripper_xyzw" in data and "t_cam2gripper" in data:
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, :3] = st.Rotation.from_quat(
+            np.asarray(data["q_cam2gripper_xyzw"], dtype=np.float64)
+        ).as_matrix()
+        tx[:3, 3] = np.asarray(data["t_cam2gripper"], dtype=np.float64)
+    else:
+        raise ValueError(f"Unsupported hand-eye json format: {path}")
+
+    if tx.shape != (4, 4):
+        raise ValueError(f"Hand-eye transform must be 4x4, got {tx.shape}")
+
+    if direction == "camera_to_eef":
+        tx = np.linalg.inv(tx)
+    elif direction != "eef_to_camera":
+        raise ValueError(
+            "--hand_eye_direction must be either eef_to_camera or camera_to_eef"
+        )
+
+    print("Loaded hand-eye T_tcp_camera0:")
+    print(tx)
+    return tx
+
+
+def transform_pose_array(pose_array, tx_right):
+    """Right-multiply pose(s) by tx_right.
+
+    pose_array: (..., 6) xyz + rotvec for T_base_frame.
+    tx_right: 4x4 transform T_frame_new_frame.
+    returns: (..., 6) T_base_new_frame.
+    """
+    pose_array = np.asarray(pose_array)
+    flat_pose = pose_array.reshape(-1, 6)
+    out = np.zeros_like(flat_pose)
+    for i, pose in enumerate(flat_pose):
+        out[i] = mat_to_pose(pose_to_mat(pose) @ tx_right)
+    return out.reshape(pose_array.shape)
+
+
+def convert_obs_tcp_to_camera(obs, tx_tcp_camera0, n_robots):
+    if tx_tcp_camera0 is None:
+        return obs
+
+    obs = dict(obs)
+    for robot_idx in range(n_robots):
+        pose = np.concatenate(
+            [
+                obs[f"robot{robot_idx}_eef_pos"],
+                obs[f"robot{robot_idx}_eef_rot_axis_angle"],
+            ],
+            axis=-1,
+        )
+        cam_pose = transform_pose_array(pose, tx_tcp_camera0)
+        obs[f"robot{robot_idx}_eef_pos"] = cam_pose[..., :3]
+        obs[f"robot{robot_idx}_eef_rot_axis_angle"] = cam_pose[..., 3:]
+    return obs
+
+
+def convert_camera_action_to_tcp(action, tx_tcp_camera0, n_robots):
+    if tx_tcp_camera0 is None:
+        return action
+
+    action = np.asarray(action).copy()
+    tx_camera0_tcp = np.linalg.inv(tx_tcp_camera0)
+    for robot_idx in range(n_robots):
+        start = robot_idx * 7
+        cam_pose = action[..., start : start + 6]
+        tcp_pose = transform_pose_array(cam_pose, tx_camera0_tcp)
+        action[..., start : start + 6] = tcp_pose
+    return action
+
+
 @click.command()
 @click.option("--input", "-i", required=True, help="Path to checkpoint")
 @click.option("--output", "-o", required=True, help="Directory to save recording")
@@ -174,6 +271,33 @@ def solve_sphere_collision(ee_poses, robots_config):
 @click.option("-sf", "--sim_fov", type=float, default=None)
 @click.option("-ci", "--camera_intrinsics", type=str, default=None)
 @click.option("--mirror_swap", is_flag=True, default=False)
+@click.option(
+    "--hand_eye_path",
+    default="/home/phi5090ii/CZY/arx-difussion-deploy/umi-deploy/hand_eye_result.json",
+    help="Hand-eye json. Interpreted as T_tcp_camera0 unless --hand_eye_direction says otherwise.",
+)
+@click.option(
+    "--hand_eye_direction",
+    type=click.Choice(["eef_to_camera", "camera_to_eef"]),
+    default="eef_to_camera",
+    help="Direction of the transform stored in --hand_eye_path.",
+)
+@click.option(
+    "--gripper_serial_port",
+    default="/dev/ttyDeviceLeft",
+    help="Gen gripper serial device. Use /dev/ttyDeviceRight for right gripper.",
+)
+@click.option(
+    "--gen_gripper_sdk_path",
+    default="/home/phi5090ii/CZY/arx-difussion-deploy/umi-deploy/gen_con_sdk_python_release",
+    help="Path to gen_con_sdk_python_release. Used for pure Python gripper serial control.",
+)
+@click.option(
+    "--gripper_encoder_frequency",
+    default=30.0,
+    type=float,
+    help="Gen gripper encoder/control polling frequency in Hz.",
+)
 def main(
     input,
     output,
@@ -193,6 +317,11 @@ def main(
     sim_fov,
     camera_intrinsics,
     mirror_swap,
+    hand_eye_path,
+    hand_eye_direction,
+    gripper_serial_port,
+    gen_gripper_sdk_path,
+    gripper_encoder_frequency,
 ):
     pid = os.getpid()
     os.sched_setaffinity(pid, [7])
@@ -214,6 +343,7 @@ def main(
         ]
     )
     tx_robot1_robot0 = tx_left_right
+    tx_tcp_camera0 = load_hand_eye_transform(hand_eye_path, hand_eye_direction)
 
     # load checkpoint
     ckpt_path = input
@@ -247,6 +377,9 @@ def main(
             "height_threshold": -0.2,  # TODO: ncscseed to measure
             "sphere_radius": 0.1,  # TODO: need to measure
             "sphere_center": [0, -0.06, -0.185],  # TODO: need to measure
+            "gripper_serial_port": gripper_serial_port,
+            "gen_gripper_sdk_path": gen_gripper_sdk_path,
+            "gripper_encoder_frequency": gripper_encoder_frequency,
         }
     ]
 
@@ -301,6 +434,7 @@ def main(
 
             print(f"Warming up policy inference")
             obs = env.get_obs()
+            obs = convert_obs_tcp_to_camera(obs, tx_tcp_camera0, len(robots_config))
             print(obs)
             episode_start_pose = list()
             for robot_id in range(len(robots_config)):
@@ -342,6 +476,9 @@ def main(
 
             assert action.shape[-1] == 10 * len(robots_config)
             action = get_real_umi_action(action, obs, action_pose_repr)
+            action = convert_camera_action_to_tcp(
+                action, tx_tcp_camera0, len(robots_config)
+            )
             assert action.shape[-1] == 7 * len(robots_config)
 
             print("Ready!")
@@ -518,6 +655,9 @@ def main(
 
                     # get current pose
                     obs = env.get_obs()
+                    obs = convert_obs_tcp_to_camera(
+                        obs, tx_tcp_camera0, len(robots_config)
+                    )
                     episode_start_pose = list()
                     for robot_id in range(len(robots_config)):
                         pose = np.concatenate(
@@ -542,6 +682,9 @@ def main(
 
                         # get obs
                         obs = env.get_obs()
+                        obs = convert_obs_tcp_to_camera(
+                            obs, tx_tcp_camera0, len(robots_config)
+                        )
                         obs_timestamps = obs["timestamp"]
                         print(f"Obs latency {time.time() - obs_timestamps[-1]}")
 
@@ -577,11 +720,18 @@ def main(
                             )
                             env.end_episode()
                             break
-                        action = get_real_umi_action(raw_action, obs, action_pose_repr)
+                        camera_action = get_real_umi_action(
+                            raw_action, obs, action_pose_repr
+                        )
+                        action = convert_camera_action_to_tcp(
+                            camera_action, tx_tcp_camera0, len(robots_config)
+                        )
                         action_data = {
                             "action": action,
+                            "camera_action": camera_action,
                             "raw_action": raw_action,
                             "action_pose_repr": action_pose_repr,
+                            "tx_tcp_camera0": tx_tcp_camera0,
                         }
                         np.save(
                             os.path.join(

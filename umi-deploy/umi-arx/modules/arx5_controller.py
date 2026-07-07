@@ -1,5 +1,8 @@
 import multiprocessing as mp
 import enum
+import os
+import struct
+import sys
 from multiprocessing.managers import SharedMemoryManager
 from typing import Optional, cast
 import numpy as np
@@ -39,10 +42,18 @@ class Arx5Controller(mp.Process):
         get_max_k: Optional[int] = None,
         verbose: bool = False,
         receive_latency: float = 0.0,
+        gripper_serial_port: Optional[str] = None,
+        gen_gripper_sdk_path: Optional[str] = None,
+        gripper_encoder_frequency: float = 30.0,
+        gripper_baudrate: int = 921600,
     ):
         super().__init__(name="Arx5Controller")
         self.robot_ip = robot_ip
         self.robot_port = robot_port
+        self.gripper_serial_port = gripper_serial_port
+        self.gen_gripper_sdk_path = gen_gripper_sdk_path
+        self.gripper_encoder_frequency = gripper_encoder_frequency
+        self.gripper_baudrate = gripper_baudrate
 
         example = {
             "cmd": Command.SERVOL.value,
@@ -204,20 +215,56 @@ class Arx5Controller(mp.Process):
 
     # ========= main loop in process ============
     def run(self):
-        # --- Gen gripper ROS interface ---
-        import rospy
-        from std_msgs.msg import Float32
-        rospy.init_node('arx5_gripper_ctrl', anonymous=True)
-        gripper_pub = rospy.Publisher('/target_distance', Float32, queue_size=1)
-
+        # --- Gen gripper pure Python serial interface ---
+        gripper_bus = None
         _encoder_val = [0.0]
         _encoder_lock = threading.Lock()
 
-        def _encoder_cb(msg):
-            with _encoder_lock:
-                _encoder_val[0] = msg.data
+        def _encoder_cb(record_data: bytes):
+            try:
+                encoder_value = struct.unpack(">f", record_data)[0]
+            except Exception as e:
+                print(f"[Arx5Controller] Gen gripper encoder callback error: {e}")
+                return
 
-        rospy.Subscriber('/encoder', Float32, _encoder_cb)
+            with _encoder_lock:
+                _encoder_val[0] = float(encoder_value)
+
+        try:
+            default_sdk_path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "..",
+                    "gen_con_sdk_python_release",
+                )
+            )
+            sdk_path = self.gen_gripper_sdk_path or default_sdk_path
+            if sdk_path not in sys.path:
+                sys.path.insert(0, sdk_path)
+
+            from scripts.databus import DataBus, find_serial_port
+
+            serial_port = self.gripper_serial_port or find_serial_port()
+            if serial_port is None:
+                raise RuntimeError(
+                    "No Gen gripper serial port found. Set gripper_serial_port "
+                    "or create /dev/ttyDeviceLeft / /dev/ttyDeviceRight."
+                )
+
+            gripper_bus = DataBus(
+                tty_port=serial_port,
+                baudrate=self.gripper_baudrate,
+                encoder_freq=self.gripper_encoder_frequency,
+                encoder_callback=_encoder_cb,
+            )
+            print(
+                "[Arx5Controller] Gen gripper DataBus ready: "
+                f"{serial_port}, encoder_freq={self.gripper_encoder_frequency}Hz"
+            )
+        except Exception as e:
+            print(f"[Arx5Controller] Failed to initialize Gen gripper DataBus: {e}")
+            raise
         # ---------------------------------
 
         self.robot_client = Arx5Client(self.robot_ip, self.robot_port)
@@ -254,9 +301,11 @@ class Arx5Controller(mp.Process):
                 t_now = time.monotonic()
                 pose_cmd = pose_interp(t_now)
                 gripper_cmd = float(gripper_pos_interp(t_now)[0])
+                gripper_cmd = float(np.clip(gripper_cmd, 0.0, 0.103))
 
-                self.robot_client.set_tcp_pose(pose_cmd, 0.0)  # gripper via ROS
-                gripper_pub.publish(Float32(data=float(gripper_cmd)))
+                self.robot_client.set_tcp_pose(pose_cmd, 0.0)
+                if gripper_bus is not None:
+                    gripper_bus.set_target_distance(gripper_cmd)
                 state = dict()
                 for key, func_name in self.receive_keys:
                     if func_name == "gripper_pos":
@@ -476,6 +525,8 @@ class Arx5Controller(mp.Process):
             print("[Arx5Controller] Setting robot to damping")
             self.robot_client.set_to_damping()
             del self.robot_client
+            if gripper_bus is not None:
+                gripper_bus.stop()
             self.ready_event.set()
             if self.verbose:
                 print("[Arx5Controller] Controller process terminated")
