@@ -1,5 +1,9 @@
 import multiprocessing as mp
 import enum
+import os
+import struct
+import sys
+from dataclasses import dataclass
 from multiprocessing.managers import SharedMemoryManager
 from typing import Optional, cast
 import numpy as np
@@ -17,6 +21,29 @@ import ctypes
 import threading
 
 
+MAX_GRIPPER_WIDTH = 0.103
+
+
+@dataclass(frozen=True)
+class GripperControlConfig:
+    demo_open_width: float = 0.095
+    demo_close_width: float = 0.03
+    demo_period: float = 1.0
+    # The 0706 pick-place training set starts episodes with the gripper open
+    # at about 0.095 m. Holding it closed before policy makes gripper obs OOD.
+    pre_policy_hold_width: float = 0.095
+    policy_gripper_enabled: bool = True
+
+
+DEFAULT_GRIPPER_CONTROL_CONFIG = GripperControlConfig()
+
+
+class GripperControlPhase(enum.Enum):
+    CONNECTED_DEMO = 0
+    PRE_POLICY_HOLD = 1
+    POLICY_CONTROL = 2
+
+
 class Command(enum.Enum):
     STOP = 0
     SERVOL = 1
@@ -24,6 +51,8 @@ class Command(enum.Enum):
     RESET_TO_HOME = 3
     ADD_WAYPOINT = 4
     UPDATE_TRAJECTORY = 5
+    SET_GRIPPER_PHASE = 6
+    SET_JOINT_POS = 7
 
 
 class Arx5Controller(mp.Process):
@@ -39,6 +68,7 @@ class Arx5Controller(mp.Process):
         get_max_k: Optional[int] = None,
         verbose: bool = False,
         receive_latency: float = 0.0,
+        skip_home: bool = False,
     ):
         super().__init__(name="Arx5Controller")
         self.robot_ip = robot_ip
@@ -47,9 +77,11 @@ class Arx5Controller(mp.Process):
         example = {
             "cmd": Command.SERVOL.value,
             "target_pose": np.zeros((6,), dtype=np.float64),
+            "target_joint_pos": np.zeros((6,), dtype=np.float64),
             "gripper_pos": 0.0,
             "duration": 0.0,
             "target_time": 0.0,
+            "gripper_phase": GripperControlPhase.CONNECTED_DEMO.value,
         }
         input_queue = SharedMemoryQueue.create_from_examples(
             shm_manager=shm_manager, examples=example, buffer_size=256
@@ -94,6 +126,7 @@ class Arx5Controller(mp.Process):
         # Will be initialized in the subprocess
         self.robot_client: Arx5Client
         self.reset_success = Value(ctypes.c_bool, False)
+        self.skip_home = skip_home
 
     # ========= launch method ===========
     def start(self, wait=True):
@@ -194,34 +227,92 @@ class Arx5Controller(mp.Process):
         }
         self.input_queue.put(message)
 
-    def reset_to_home(self):
+    def set_gripper_control_phase(self, phase: GripperControlPhase):
+        message = {
+            "cmd": Command.SET_GRIPPER_PHASE.value,
+            "gripper_phase": phase.value,
+        }
+        self.input_queue.put(message)
+
+    def set_joint_pos(
+        self,
+        joint_pos: npt.NDArray[np.float64],
+        gripper_pos: float,
+        duration: float = 2.0,
+        max_joint_step_rad: float = np.pi,
+        timeout: float = 5.0,
+    ):
+        assert self.is_alive()
+        joint_pos = np.asarray(joint_pos, dtype=np.float64)
+        assert joint_pos.shape == (6,)
+        self.reset_success.value = False
+        message = {
+            "cmd": Command.SET_JOINT_POS.value,
+            "target_joint_pos": joint_pos,
+            "gripper_pos": gripper_pos,
+            "duration": float(duration),
+            "target_time": float(max_joint_step_rad),
+        }
+        self.input_queue.put(message)
+        start_time = time.monotonic()
+        while not self.reset_success.value:
+            if time.monotonic() - start_time > timeout:
+                print(
+                    f"\n[WARN] set_joint_pos 等待超时 ({timeout}s)，继续用当前实机状态。"
+                )
+                break
+            time.sleep(0.05)
+
+    def reset_to_home(self, timeout=5.0):
         self.reset_success.value = False
         message = {"cmd": Command.RESET_TO_HOME.value}
         self.input_queue.put(message)
+        start_time = time.monotonic()
         while not self.reset_success.value:
-            print("waiting for reset")
+            if time.monotonic() - start_time > timeout:
+                print(f"\n[SAFE TEARDOWN] reset_to_home 等待超时 ({timeout}s)，触发短路保护以防止死锁。")
+                break
             time.sleep(0.1)
 
     # ========= main loop in process ============
     def run(self):
-        # --- Gen gripper ROS interface ---
-        import rospy
-        from std_msgs.msg import Float32
-        rospy.init_node('arx5_gripper_ctrl', anonymous=True)
-        gripper_pub = rospy.Publisher('/target_distance', Float32, queue_size=1)
-
         _encoder_val = [0.0]
         _encoder_lock = threading.Lock()
 
-        def _encoder_cb(msg):
+        def _encoder_cb(record_data: bytes):
+            try:
+                encoder_value = struct.unpack(">f", record_data)[0]
+            except Exception as e:
+                print(f"[Arx5Controller] Encoder data handler error: {e}")
+                return
             with _encoder_lock:
-                _encoder_val[0] = msg.data
+                _encoder_val[0] = float(encoder_value)
 
-        rospy.Subscriber('/encoder', Float32, _encoder_cb)
-        # ---------------------------------
+        gripper_bus = None
+        sdk_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "gen_con_sdk_python_release")
+        )
+        if sdk_root not in sys.path:
+            sys.path.insert(0, sdk_root)
+        try:
+            from scripts.databus import DataBus
+
+            serial_port = os.environ.get("GEN_GRIPPER_SERIAL_PORT", "/dev/ttyDeviceLeft")
+            gripper_bus = DataBus(
+                tty_port=serial_port,
+                encoder_freq=30,
+                encoder_callback=_encoder_cb,
+            )
+            print(f"[Arx5Controller] Gen gripper Python SDK connected: {serial_port}")
+        except Exception as e:
+            print(f"[Arx5Controller] Gen gripper Python SDK disabled: {e}")
 
         self.robot_client = Arx5Client(self.robot_ip, self.robot_port)
-        self.robot_client.reset_to_home()
+        if self.skip_home:
+            print("[Arx5Controller] skip_home=True: holding current pose (bumpless)")
+            self.robot_client.hold_current_pose()
+        else:
+            self.robot_client.reset_to_home()
         time.sleep(1)
         gain = self.robot_client.get_gain()
         gain["kp"] = np.array([300, 300, 400, 80, 50, 30])
@@ -229,6 +320,7 @@ class Arx5Controller(mp.Process):
         np.set_printoptions(precision=3, suppress=True)
 
         self.waypoint_buffer = []
+        gripper_control_config = DEFAULT_GRIPPER_CONTROL_CONFIG
 
         try:
 
@@ -246,6 +338,60 @@ class Arx5Controller(mp.Process):
                 times=np.array([curr_t]),
                 poses=np.array([[curr_gripper_pos, 0, 0, 0, 0, 0]]),
             )
+            gripper_control_phase = GripperControlPhase.CONNECTED_DEMO
+            gripper_phase_start_time = curr_t
+
+            def _clip_gripper_width(width: float) -> float:
+                return float(np.clip(width, 0.0, MAX_GRIPPER_WIDTH))
+
+            def _make_gripper_interp(target_width: float, at_time: float):
+                return PoseTrajectoryInterpolator(
+                    times=np.array([at_time]),
+                    poses=np.array(
+                        [[_clip_gripper_width(target_width), 0, 0, 0, 0, 0]]
+                    ),
+                )
+
+            def _reset_gripper_interp(at_time: float):
+                with _encoder_lock:
+                    current_width = _encoder_val[0]
+                return _make_gripper_interp(current_width, at_time)
+
+            def _set_gripper_phase(phase: GripperControlPhase, at_time: float):
+                nonlocal gripper_control_phase, gripper_phase_start_time, gripper_pos_interp
+                if phase == gripper_control_phase:
+                    return
+                gripper_control_phase = phase
+                gripper_phase_start_time = at_time
+                gripper_pos_interp = _reset_gripper_interp(at_time)
+                if self.verbose:
+                    print(
+                        f"[Arx5Controller] Gripper control phase -> {gripper_control_phase.name}"
+                    )
+
+            def _resolve_gripper_command(target_width: float, now: float) -> float:
+                if gripper_control_phase == GripperControlPhase.CONNECTED_DEMO:
+                    if gripper_control_config.demo_period <= 0:
+                        return _clip_gripper_width(
+                            gripper_control_config.demo_open_width
+                        )
+                    cycle_progress = (
+                        (now - gripper_phase_start_time)
+                        % gripper_control_config.demo_period
+                    ) / gripper_control_config.demo_period
+                    demo_width = (
+                        gripper_control_config.demo_open_width
+                        if cycle_progress < 0.5
+                        else gripper_control_config.demo_close_width
+                    )
+                    return _clip_gripper_width(demo_width)
+                if gripper_control_phase == GripperControlPhase.PRE_POLICY_HOLD:
+                    return _clip_gripper_width(
+                        gripper_control_config.pre_policy_hold_width
+                    )
+                if gripper_control_config.policy_gripper_enabled:
+                    return _clip_gripper_width(target_width)
+                return _clip_gripper_width(gripper_control_config.pre_policy_hold_width)
 
             t_start = time.monotonic()
             iter_idx = 0
@@ -253,10 +399,26 @@ class Arx5Controller(mp.Process):
             while keep_running:
                 t_now = time.monotonic()
                 pose_cmd = pose_interp(t_now)
-                gripper_cmd = float(gripper_pos_interp(t_now)[0])
+                scheduled_gripper_cmd = float(gripper_pos_interp(t_now)[0])
+                gripper_cmd = _resolve_gripper_command(scheduled_gripper_cmd, t_now)
 
-                self.robot_client.set_tcp_pose(pose_cmd, 0.0)  # gripper via ROS
-                gripper_pub.publish(Float32(data=float(gripper_cmd)))
+                try:
+                    self.robot_client.set_tcp_pose(pose_cmd, 0.0)
+                except ValueError as e:
+                    print(f"\n[WARN] 忽略跳变动作 (ZMQ Reject): {e}")
+                    self.robot_client.get_state()
+                    curr_pose = self.robot_client.tcp_pose
+                    pose_interp = PoseTrajectoryInterpolator(
+                        times=np.array([t_now]), poses=np.array([curr_pose])
+                    )
+                    gripper_pos_interp = _reset_gripper_interp(t_now)
+                    self.waypoint_buffer.clear()
+                    last_waypoint_time = t_now
+                if gripper_bus is not None:
+                    try:
+                        gripper_bus.set_target_distance(float(gripper_cmd))
+                    except Exception as e:
+                        print(f"[Arx5Controller] Gripper command failed: {e}")
                 state = dict()
                 for key, func_name in self.receive_keys:
                     if func_name == "gripper_pos":
@@ -364,6 +526,51 @@ class Arx5Controller(mp.Process):
                         gain["kp"] = np.array([300, 300, 400, 80, 50, 30])
                         self.robot_client.set_gain(gain)
 
+                    elif cmd == Command.SET_JOINT_POS.value:
+                        target_joint_pos = np.asarray(command["target_joint_pos"], dtype=np.float64)
+                        duration = float(command["duration"])
+                        max_joint_step_rad = float(command["target_time"])
+                        with _encoder_lock:
+                            current_gripper_pos = _encoder_val[0]
+                        gripper_target = command["gripper_pos"]
+                        if np.isfinite(gripper_target):
+                            current_gripper_pos = float(gripper_target)
+                        self.robot_client.set_joint_pos(
+                            target_joint_pos,
+                            gripper_pos=current_gripper_pos,
+                            duration=duration,
+                            max_joint_step_rad=max_joint_step_rad,
+                        )
+                        self.robot_client.get_state()
+
+                        self.ring_buffer.clear()
+                        state = dict()
+                        for key, func_name in self.receive_keys:
+                            if func_name == "gripper_pos":
+                                with _encoder_lock:
+                                    state[key] = _encoder_val[0]
+                            else:
+                                state[key] = getattr(self.robot_client, func_name)
+                        t_recv = time.time()
+                        state["robot_receive_timestamp"] = t_recv
+                        state["robot_timestamp"] = t_recv - self.receive_latency
+                        self.ring_buffer.put(state)
+
+                        curr_pose = self.robot_client.tcp_pose
+                        curr_t = time.monotonic()
+                        last_waypoint_time = curr_t
+                        pose_interp = PoseTrajectoryInterpolator(
+                            times=np.array([curr_t]), poses=np.array([curr_pose])
+                        )
+                        gripper_pos_interp = PoseTrajectoryInterpolator(
+                            times=np.array([curr_t]),
+                            poses=np.array([[state["gripper_position"], 0, 0, 0, 0, 0]]),
+                        )
+                        self.waypoint_buffer = []
+                        self.reset_success.value = True
+                        if self.verbose:
+                            print(f"[Arx5Controller] Set joint pos: {target_joint_pos}")
+
                     elif cmd == Command.ADD_WAYPOINT.value:
                         if len(self.waypoint_buffer) > 0:
                             last_waypoint_time = self.waypoint_buffer[-1]["target_time"]
@@ -456,6 +663,9 @@ class Arx5Controller(mp.Process):
                             )
                         # clear buffer
                         self.waypoint_buffer = []
+                    elif cmd == Command.SET_GRIPPER_PHASE.value:
+                        phase = GripperControlPhase(int(command["gripper_phase"]))
+                        _set_gripper_phase(phase, t_now)
                     else:
                         keep_running = False
                         print(f"[Arx5Controller] Unknown command {cmd}")
@@ -475,6 +685,8 @@ class Arx5Controller(mp.Process):
         finally:
             print("[Arx5Controller] Setting robot to damping")
             self.robot_client.set_to_damping()
+            if gripper_bus is not None:
+                gripper_bus.stop()
             del self.robot_client
             self.ready_event.set()
             if self.verbose:

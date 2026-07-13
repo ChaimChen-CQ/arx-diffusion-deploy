@@ -15,9 +15,17 @@ Arx5ControllerBase::Arx5ControllerBase(RobotConfig robot_config, ControllerConfi
 {
     start_time_us_ = get_time_us();
     logger_->set_pattern("[%H:%M:%S %n %^%l%$] %v");
-    solver_ = std::make_shared<Arx5Solver>(
-        robot_config_.urdf_path, robot_config_.joint_dof, robot_config_.joint_pos_min, robot_config_.joint_pos_max,
-        robot_config_.base_link_name, robot_config_.eef_link_name, robot_config_.gravity_vector);
+    if (controller_config_.gravity_compensation)
+    {
+        solver_ = std::make_shared<Arx5Solver>(
+            robot_config_.urdf_path, robot_config_.joint_dof, robot_config_.joint_pos_min, robot_config_.joint_pos_max,
+            robot_config_.base_link_name, robot_config_.eef_link_name, robot_config_.gravity_vector);
+    }
+    else
+    {
+        solver_ = std::make_shared<Arx5Solver>(
+            robot_config_.urdf_path, robot_config_.joint_dof, robot_config_.joint_pos_min, robot_config_.joint_pos_max);
+    }
     if (robot_config_.robot_model == "X5" && !controller_config_.shutdown_to_passive)
     {
         logger_->warn("When shutting down X5 robot arms, the motors have to be set to passive. "
@@ -71,20 +79,35 @@ Arx5ControllerBase::~Arx5ControllerBase()
 JointState Arx5ControllerBase::get_joint_cmd()
 {
     std::lock_guard<std::mutex> guard(cmd_mutex_);
-    return output_joint_cmd_;
+    JointState cmd = output_joint_cmd_;
+    return cmd;
 }
 
 JointState Arx5ControllerBase::get_joint_state()
 {
     std::lock_guard<std::mutex> guard(state_mutex_);
-    return joint_state_;
+    JointState state = joint_state_;
+    return state;
 }
 
 EEFState Arx5ControllerBase::get_eef_state()
 {
     EEFState eef_state;
     JointState joint_state = get_joint_state();
-    Pose6d tool_pose = solver_->forward_kinematics(joint_state.pos);
+    VecDoF fk_joint_pos = joint_state.pos;
+    if (fk_joint_pos.size() != robot_config_.joint_dof)
+    {
+        JointState joint_cmd = get_joint_cmd();
+        logger_->warn("Joint state size is {}, falling back to joint command size {}", fk_joint_pos.size(),
+                      joint_cmd.pos.size());
+        fk_joint_pos = joint_cmd.pos;
+    }
+    if (fk_joint_pos.size() != robot_config_.joint_dof)
+    {
+        logger_->warn("FK seed size is {}, falling back to zero seed", fk_joint_pos.size());
+        fk_joint_pos = VecDoF::Zero(robot_config_.joint_dof);
+    }
+    Pose6d tool_pose = solver_->forward_kinematics(fk_joint_pos);
     eef_state.pose_6d = tool_pose;
     eef_state.timestamp = joint_state.timestamp;
     eef_state.gripper_pos = joint_state.gripper_pos;
@@ -123,7 +146,9 @@ void Arx5ControllerBase::set_gain(Gain new_gain)
 Gain Arx5ControllerBase::get_gain()
 {
     std::lock_guard<std::mutex> guard(cmd_mutex_);
-    return gain_;
+    // Create a copy of gain_ to avoid returning a reference to the internal state
+    Gain gain(gain_.kp, gain_.kd, gain_.gripper_kp, gain_.gripper_kd);
+    return gain;
 }
 
 double Arx5ControllerBase::get_timestamp()
@@ -132,11 +157,13 @@ double Arx5ControllerBase::get_timestamp()
 }
 RobotConfig Arx5ControllerBase::get_robot_config()
 {
-    return robot_config_;
+    RobotConfig config = robot_config_;
+    return config;
 }
 ControllerConfig Arx5ControllerBase::get_controller_config()
 {
-    return controller_config_;
+    ControllerConfig config = controller_config_;
+    return config;
 }
 void Arx5ControllerBase::set_log_level(spdlog::level::level_enum level)
 {
@@ -165,7 +192,8 @@ void Arx5ControllerBase::reset_to_home()
 
     // calculate the maximum joint position error
     double max_pos_error = (init_state.pos - VecDoF::Zero(robot_config_.joint_dof)).cwiseAbs().maxCoeff();
-    max_pos_error = std::max(max_pos_error, init_state.gripper_pos * 2 / robot_config_.gripper_width);
+    max_pos_error = std::max(max_pos_error, std::abs(init_state.gripper_pos - robot_config_.gripper_width) * 2 /
+                                                robot_config_.gripper_width);
     // interpolate from current kp kd to default kp kd in max(max_pos_error, 0.5)s
     // and keep the target for max(max_pos_error, 0.5)s
     double wait_time = std::max(max_pos_error, 0.5);
@@ -176,7 +204,8 @@ void Arx5ControllerBase::reset_to_home()
     bool prev_running = background_send_recv_running_;
     background_send_recv_running_ = true;
     target_state.timestamp = get_timestamp() + wait_time;
-    target_state.pos[2] = 0.03; // avoiding clash
+    target_state.pos[2] = 0.03;                             // avoiding clash
+    target_state.gripper_pos = robot_config_.gripper_width; // fully open
 
     {
         std::lock_guard<std::mutex> guard(cmd_mutex_);
@@ -224,6 +253,22 @@ void Arx5ControllerBase::set_to_damping()
 
 void Arx5ControllerBase::init_robot_()
 {
+    // Clear motor controller states before initialization (fix for motor controller state corruption)
+    logger_->info("Clearing motor controller states...");
+    for (int i = 0; i < robot_config_.joint_dof; i++)
+    {
+        if (robot_config_.motor_type[i] == MotorType::DM_J4310 || robot_config_.motor_type[i] == MotorType::DM_J4340 ||
+            robot_config_.motor_type[i] == MotorType::DM_J8009)
+        {
+            can_handle_.clear(robot_config_.motor_id[i]);
+        }
+    }
+    if (robot_config_.gripper_motor_type == MotorType::DM_J4310)
+    {
+        can_handle_.clear(robot_config_.gripper_motor_id);
+    }
+    sleep_ms(100); // Give motors time to process clear commands
+
     // Background send receive is disabled during initialization
     int init_rounds = 10; // Make sure the states of each motor is fully initialized
     for (int j = 0; j < init_rounds; j++)
@@ -302,7 +347,8 @@ void Arx5ControllerBase::check_joint_state_sanity_()
         joint_state_.gripper_pos > robot_config_.gripper_width + gripper_width_tolerance)
     {
         logger_->error("Gripper position error: got {:.3f} but should be in 0~{:.3f} (m). Please close the gripper "
-                       "before turning the arm on or recalibrate gripper home and width.",
+                       "before turning on the arm; change robot_config.gripper_open_readout to a negative number (a "
+                       "common value is -3.4 for some recent robots); or recalibrate gripper home and width.",
                        joint_state_.gripper_pos, robot_config_.gripper_width);
         enter_emergency_state_();
     }

@@ -1,0 +1,31 @@
+{
+  "input_pkl": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/hand_eye_calib_300_350_v2.pkl",
+  "output_pkl": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/hand_eye_calib_300_350_v2_processed_aruco.pkl",
+  "overlay_dir": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/hand_eye_calib_300_350_v2_processed_overlays",
+  "samples_total": 53,
+  "raw_aruco_detected": 53,
+  "processed_aruco_detected": 53,
+  "processed_failed_indices": [],
+  "processed_K": [
+    [
+      128.7249434175791,
+      0.0,
+      213.90785390376857
+    ],
+    [
+      0.0,
+      119.21130754089992,
+      238.93100925871255
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "processed_mode": "rectified",
+  "raw_250_350_count": 53,
+  "processed_250_350_count": 53,
+  "raw_300_350_count": 41,
+  "processed_300_350_count": 41
+}

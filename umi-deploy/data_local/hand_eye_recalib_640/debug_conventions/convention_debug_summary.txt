@@ -1,0 +1,43 @@
+PKL: /home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/hand_eye_calib.pkl
+JSON: /home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/robot_world_hand_eye_cam0_tag145.json
+Intrinsics: /home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/calibration/cam0_sensor_intrinsics.json
+ArUco YAML: /home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_tags/aruco_config_tag12_145mm.yaml
+Tag ID: 12, Tag Size: 0.145m
+Samples used: 30/30
+
+ArUco PnP reproj (px): mean=3.7314 median=3.7865 max=8.8009
+
+Perm 0: tcp=T_base_tcp  b2w=as-is  g2c=as-is
+  Trans(mm): mean=495.37 median=489.09 rms=495.61 max=526.98
+  Rot(deg):  mean=176.51 median=176.44 rms=176.51 max=178.95
+
+Perm 1: tcp=T_base_tcp  b2w=as-is  g2c=inv
+  Trans(mm): mean=448.46 median=456.01 rms=462.93 max=637.00
+  Rot(deg):  mean=173.85 median=174.66 rms=173.90 max=179.86
+
+Perm 2: tcp=T_base_tcp  b2w=inv    g2c=as-is
+  Trans(mm): mean=24.80 median=22.94 rms=26.76 max=55.05
+  Rot(deg):  mean=3.93 median=3.58 rms=4.35 max=8.22
+
+Perm 3: tcp=T_base_tcp  b2w=inv    g2c=inv
+  Trans(mm): mean=343.92 median=343.76 rms=344.62 max=388.80
+  Rot(deg):  mean=31.36 median=31.23 rms=31.48 max=36.24
+
+Perm 4: tcp=T_tcp_base  b2w=as-is  g2c=as-is
+  Trans(mm): mean=340.35 median=332.10 rms=355.45 max=557.04
+  Rot(deg):  mean=174.31 median=175.46 rms=174.35 max=179.51
+
+Perm 5: tcp=T_tcp_base  b2w=as-is  g2c=inv
+  Trans(mm): mean=380.07 median=416.53 rms=410.77 max=627.91
+  Rot(deg):  mean=175.17 median=176.85 rms=175.24 max=178.94
+
+Perm 6: tcp=T_tcp_base  b2w=inv    g2c=as-is
+  Trans(mm): mean=428.95 median=456.33 rms=443.78 max=633.51
+  Rot(deg):  mean=38.05 median=37.87 rms=42.03 max=64.14
+
+Perm 7: tcp=T_tcp_base  b2w=inv    g2c=inv
+  Trans(mm): mean=480.10 median=467.20 rms=500.82 max=708.38
+  Rot(deg):  mean=42.41 median=41.65 rms=44.78 max=76.55
+
+BEST: Perm 2 (tcp=T_base_tcp  b2w=inv    g2c=as-is)
+  median translation error: 22.94 mm

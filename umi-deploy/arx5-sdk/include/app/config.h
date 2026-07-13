@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include "app/common.h"
+#include "utils.h"
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -89,6 +90,10 @@ class RobotConfigFactory
   private:
     RobotConfigFactory()
     {
+        std::string root_dir = get_root_dir();
+        printf("Found root directory: %s\n", root_dir.c_str());
+        std::string model_dir = root_dir + "/models";
+        printf("URDF models directory: %s\n", model_dir.c_str());
         configurations["X5"] = std::make_shared<RobotConfig>(
             "X5",                                                          // robot_model
             (VecDoF(6) << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished(), // joint_pos_min
@@ -109,7 +114,7 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                   // gravity_vector
             "base_link",                                                      // base_link_name
             "eef_link",                                                       // eef_link_name
-            std::string(SDK_ROOT) + "/models/X5.urdf"                         // urdf_path
+            model_dir + "/X5.urdf"                                            // urdf_path
         );
         configurations["X5_umi"] = std::make_shared<RobotConfig>(
             "X5_umi",                                                      // robot_model
@@ -131,8 +136,13 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                   // gravity_vector
             "base_link",                                                      // base_link_name
             "eef_link",                                                       // eef_link_name
-            std::string(SDK_ROOT) + "/models/X5_umi.urdf"                     // urdf_path
+            model_dir + "/X5_umi.urdf"                                        // urdf_path
         );
+
+        configurations["X5_iphumi"] = std::make_shared<RobotConfig>(*configurations["X5_umi"]);
+        configurations["X5_iphumi"]->robot_model = "X5_iphumi";
+        configurations["X5_iphumi"]->urdf_path = model_dir + "/X5_iphumi.urdf";
+
         configurations["L5"] = std::make_shared<RobotConfig>(
             "L5",                                                          // robot_model
             (VecDoF(6) << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished(), // joint_pos_min
@@ -153,7 +163,7 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                   // gravity_vector
             "base_link",                                                      // base_link_name
             "eef_link",                                                       // eef_link_name
-            std::string(SDK_ROOT) + "/models/L5.urdf"                         // urdf_path
+            model_dir + "/L5.urdf"                                            // urdf_path
         );
         configurations["L5_umi"] = std::make_shared<RobotConfig>(
             "L5_umi",                                                      // robot_model
@@ -175,8 +185,13 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                   // gravity_vector
             "base_link",                                                      // base_link_name
             "eef_link",                                                       // eef_link_name
-            std::string(SDK_ROOT) + "/models/L5_umi.urdf"                     // urdf_path
+            model_dir + "/L5_umi.urdf"                                        // urdf_path
         );
+
+        configurations["L5_iphumi"] = std::make_shared<RobotConfig>(*configurations["L5_umi"]);
+        configurations["L5_iphumi"]->robot_model = "L5_iphumi";
+        configurations["L5_iphumi"]->urdf_path = model_dir + "/L5_iphumi.urdf";
+
         configurations["X7_left"] = std::make_shared<RobotConfig>(
             "X7_left",                                                                 // robot_model
             (VecDoF(7) << -2.09439, -1.5, -1.5, -1.5, -1.2, -0.3, -0.7854).finished(), // joint_pos_min
@@ -197,7 +212,7 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                                        // gravity_vector
             "base_link",                                                                           // base_link_name
             "eef_link",                                                                            // eef_link_name
-            std::string(SDK_ROOT) + "/models/X7_left.urdf"                                         // urdf_path
+            model_dir + "/X7_left.urdf"                                                            // urdf_path
         );
         configurations["X7_right"] = std::make_shared<RobotConfig>(
             "X7_right",                                                                   // robot_model
@@ -219,7 +234,7 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                                        // gravity_vector
             "base_link",                                                                           // base_link_name
             "eef_link",                                                                            // eef_link_name
-            std::string(SDK_ROOT) + "/models/X7_right.urdf"                                        // urdf_path
+            model_dir + "/X7_right.urdf"                                                           // urdf_path
         );
     }
 

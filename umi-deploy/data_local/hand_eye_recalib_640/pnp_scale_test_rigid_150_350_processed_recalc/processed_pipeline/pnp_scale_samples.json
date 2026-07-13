@@ -1,0 +1,2289 @@
+{
+  "samples": [
+    {
+      "sample_idx": 10,
+      "timestamp": 1777550753.3444357,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0010_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0010_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.7073516845703,
+          198.65489196777344
+        ],
+        [
+          272.5340270996094,
+          204.59097290039062
+        ],
+        [
+          255.25485229492188,
+          285.5306701660156
+        ],
+        [
+          175.58213806152344,
+          281.4438171386719
+        ]
+      ],
+      "rvec": [
+        -2.8357781814921936,
+        -0.08008669432565932,
+        0.0011669676404128745
+      ],
+      "tvec": [
+        0.0066444366276994455,
+        0.013555729397937815,
+        0.20574467451995243
+      ],
+      "tvec_z_m": 0.20574467451995243,
+      "tvec_norm_m": 0.20629778823567352,
+      "reprojection_error_px": [
+        0.900231318964474,
+        0.4631586252239839,
+        1.7176867379801366,
+        1.9494153798226714
+      ],
+      "reprojection_mean_px": 1.2576230154978165,
+      "reprojection_max_px": 1.9494153798226714,
+      "corner_side_px": 87.1339970755269,
+      "bbox_width_px": 102.82667541503906,
+      "bbox_height_px": 86.87577819824219
+    },
+    {
+      "sample_idx": 11,
+      "timestamp": 1777550753.4783885,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0011_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0011_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.69473266601562,
+          198.66036987304688
+        ],
+        [
+          272.54840087890625,
+          204.59262084960938
+        ],
+        [
+          255.24066162109375,
+          285.5380859375
+        ],
+        [
+          175.60763549804688,
+          281.45208740234375
+        ]
+      ],
+      "rvec": [
+        -2.8353267148867984,
+        -0.07999977385635637,
+        0.0013390832581119704
+      ],
+      "tvec": [
+        0.0066457598212191936,
+        0.013573567077263924,
+        0.20573366984608318
+      ],
+      "tvec_z_m": 0.20573366984608318,
+      "tvec_norm_m": 0.20628802862778894,
+      "reprojection_error_px": [
+        0.9071399985684837,
+        0.4679107957620161,
+        1.7348732373412954,
+        1.96787845002823
+      ],
+      "reprojection_mean_px": 1.2694506204250064,
+      "reprojection_max_px": 1.96787845002823,
+      "corner_side_px": 87.13503412495038,
+      "bbox_width_px": 102.85366821289062,
+      "bbox_height_px": 86.87771606445312
+    },
+    {
+      "sample_idx": 12,
+      "timestamp": 1777550753.675746,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0012_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0012_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.6802520751953,
+          198.64405822753906
+        ],
+        [
+          272.5617370605469,
+          204.56959533691406
+        ],
+        [
+          255.1671142578125,
+          285.5536193847656
+        ],
+        [
+          175.5950164794922,
+          281.4513244628906
+        ]
+      ],
+      "rvec": [
+        -2.834953161308174,
+        -0.08038610399473109,
+        0.0013660961512545504
+      ],
+      "tvec": [
+        0.006610283105234726,
+        0.013568259732483951,
+        0.20570811437121775
+      ],
+      "tvec_z_m": 0.20570811437121775,
+      "tvec_norm_m": 0.2062610526324868,
+      "reprojection_error_px": [
+        0.9002274603262809,
+        0.49477931068657993,
+        1.7773266625329667,
+        1.9916236391734579
+      ],
+      "reprojection_mean_px": 1.2909892681798214,
+      "reprojection_max_px": 1.9916236391734579,
+      "corner_side_px": 87.14476523390253,
+      "bbox_width_px": 102.88148498535156,
+      "bbox_height_px": 86.90956115722656
+    },
+    {
+      "sample_idx": 13,
+      "timestamp": 1777550753.8765182,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0013_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0013_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.69557189941406,
+          198.65980529785156
+        ],
+        [
+          272.5454406738281,
+          204.5744171142578
+        ],
+        [
+          255.22889709472656,
+          285.5428771972656
+        ],
+        [
+          175.58787536621094,
+          281.4818420410156
+        ]
+      ],
+      "rvec": [
+        -2.835687638685594,
+        -0.07995860241121357,
+        0.00035603074084308145
+      ],
+      "tvec": [
+        0.006650699512235019,
+        0.01357299909139948,
+        0.2057058097605412
+      ],
+      "tvec_z_m": 0.2057058097605412,
+      "tvec_norm_m": 0.20626036526094182,
+      "reprojection_error_px": [
+        0.8971316951027252,
+        0.4813336498980873,
+        1.7483945972013477,
+        1.967393720877266
+      ],
+      "reprojection_mean_px": 1.2735634157698565,
+      "reprojection_max_px": 1.967393720877266,
+      "corner_side_px": 87.14878616095173,
+      "bbox_width_px": 102.84986877441406,
+      "bbox_height_px": 86.88307189941406
+    },
+    {
+      "sample_idx": 14,
+      "timestamp": 1777550754.0772736,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0014_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0014_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.6769561767578,
+          198.66387939453125
+        ],
+        [
+          272.5534362792969,
+          204.5569610595703
+        ],
+        [
+          255.24114990234375,
+          285.5360107421875
+        ],
+        [
+          175.61122131347656,
+          281.46673583984375
+        ]
+      ],
+      "rvec": [
+        -2.835295260519515,
+        -0.07968176575570995,
+        0.0013015031416393273
+      ],
+      "tvec": [
+        0.006643418142811735,
+        0.013565650968890139,
+        0.2056980926801313
+      ],
+      "tvec_z_m": 0.2056980926801313,
+      "tvec_norm_m": 0.2062519508345894,
+      "reprojection_error_px": [
+        0.9003333345833043,
+        0.47938671540292616,
+        1.7488119357649794,
+        1.9716548659985467
+      ],
+      "reprojection_mean_px": 1.2750467129374392,
+      "reprojection_max_px": 1.9716548659985467,
+      "corner_side_px": 87.15078558453902,
+      "bbox_width_px": 102.87648010253906,
+      "bbox_height_px": 86.87213134765625
+    },
+    {
+      "sample_idx": 15,
+      "timestamp": 1777550754.2720263,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0015_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0015_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.72572326660156,
+          198.67222595214844
+        ],
+        [
+          272.5244445800781,
+          204.5856170654297
+        ],
+        [
+          255.18643188476562,
+          285.512451171875
+        ],
+        [
+          175.60671997070312,
+          281.4402160644531
+        ]
+      ],
+      "rvec": [
+        -2.835368285747945,
+        -0.08017115007217057,
+        0.0005496377199370875
+      ],
+      "tvec": [
+        0.006645282894269324,
+        0.013557673996076885,
+        0.2058210906128545
+      ],
+      "tvec_z_m": 0.2058210906128545,
+      "tvec_norm_m": 0.20637415451066937,
+      "reprojection_error_px": [
+        0.8927921119330857,
+        0.4879796109949041,
+        1.7569965301546975,
+        1.9700966320505477
+      ],
+      "reprojection_mean_px": 1.2769662212833088,
+      "reprojection_max_px": 1.9700966320505477,
+      "corner_side_px": 87.09810758218485,
+      "bbox_width_px": 102.79872131347656,
+      "bbox_height_px": 86.84022521972656
+    },
+    {
+      "sample_idx": 16,
+      "timestamp": 1777550754.4101398,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0016_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0016_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.69140625,
+          198.6606903076172
+        ],
+        [
+          272.5377197265625,
+          204.59828186035156
+        ],
+        [
+          255.20689392089844,
+          285.5193176269531
+        ],
+        [
+          175.61614990234375,
+          281.4447326660156
+        ]
+      ],
+      "rvec": [
+        -2.834959016884186,
+        -0.08004064730553671,
+        0.0008445717642601704
+      ],
+      "tvec": [
+        0.006640003720387031,
+        0.01357186031240627,
+        0.205770895196514
+      ],
+      "tvec_z_m": 0.205770895196514,
+      "tvec_norm_m": 0.20632485635938527,
+      "reprojection_error_px": [
+        0.9090832186927147,
+        0.47216537779223033,
+        1.7463190007657248,
+        1.9774758823548018
+      ],
+      "reprojection_mean_px": 1.276260869901368,
+      "reprojection_max_px": 1.9774758823548018,
+      "corner_side_px": 87.11610551620035,
+      "bbox_width_px": 102.8463134765625,
+      "bbox_height_px": 86.85862731933594
+    },
+    {
+      "sample_idx": 17,
+      "timestamp": 1777550754.604304,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0017_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0017_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.6785430908203,
+          198.6217803955078
+        ],
+        [
+          272.5290832519531,
+          204.59634399414062
+        ],
+        [
+          255.1980438232422,
+          285.5410461425781
+        ],
+        [
+          175.57293701171875,
+          281.44622802734375
+        ]
+      ],
+      "rvec": [
+        -2.835435673873945,
+        -0.08043448182905455,
+        0.0008030478841387464
+      ],
+      "tvec": [
+        0.006609080595103028,
+        0.01355460641865514,
+        0.205721568312743
+      ],
+      "tvec_z_m": 0.205721568312743,
+      "tvec_norm_m": 0.2062735343434339,
+      "reprojection_error_px": [
+        0.9139834954352734,
+        0.46803476471861316,
+        1.741443640209678,
+        1.9776246202277643
+      ],
+      "reprojection_mean_px": 1.2752716301478322,
+      "reprojection_max_px": 1.9776246202277643,
+      "corner_side_px": 87.14186559411847,
+      "bbox_width_px": 102.85054016113281,
+      "bbox_height_px": 86.91926574707031
+    },
+    {
+      "sample_idx": 18,
+      "timestamp": 1777550754.872619,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0018_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0018_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.6668701171875,
+          198.66278076171875
+        ],
+        [
+          272.5509033203125,
+          204.59825134277344
+        ],
+        [
+          255.25021362304688,
+          285.507080078125
+        ],
+        [
+          175.6360626220703,
+          281.4306945800781
+        ]
+      ],
+      "rvec": [
+        -2.8345094543345644,
+        -0.07968903263424847,
+        0.0016043210618796487
+      ],
+      "tvec": [
+        0.006645110959952665,
+        0.013571924293805264,
+        0.20574684993353992
+      ],
+      "tvec_z_m": 0.20574684993353992,
+      "tvec_norm_m": 0.2063010443169919,
+      "reprojection_error_px": [
+        0.9177413362647979,
+        0.4546826197869761,
+        1.7243309506885782,
+        1.970912333971317
+      ],
+      "reprojection_mean_px": 1.2669168101779174,
+      "reprojection_max_px": 1.970912333971317,
+      "corner_side_px": 87.12357009273393,
+      "bbox_width_px": 102.884033203125,
+      "bbox_height_px": 86.84429931640625
+    },
+    {
+      "sample_idx": 19,
+      "timestamp": 1777550755.1040337,
+      "measured_distance_mm": 200.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0019_200.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0019_200.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          169.7415771484375,
+          198.6426544189453
+        ],
+        [
+          272.5511474609375,
+          204.57005310058594
+        ],
+        [
+          255.24993896484375,
+          285.5370788574219
+        ],
+        [
+          175.6162872314453,
+          281.4615478515625
+        ]
+      ],
+      "rvec": [
+        -2.8360731740878022,
+        -0.0800711842057832,
+        0.0006593668077904649
+      ],
+      "tvec": [
+        0.006686403255031557,
+        0.013544091849260564,
+        0.20574941503318744
+      ],
+      "tvec_z_m": 0.20574941503318744,
+      "tvec_norm_m": 0.20630310758446885,
+      "reprojection_error_px": [
+        0.9037233921091695,
+        0.4776519191485828,
+        1.746350503806421,
+        1.9712893673404996
+      ],
+      "reprojection_mean_px": 1.2747537956011683,
+      "reprojection_max_px": 1.9712893673404996,
+      "corner_side_px": 87.13500912403255,
+      "bbox_width_px": 102.8095703125,
+      "bbox_height_px": 86.89442443847656
+    },
+    {
+      "sample_idx": 20,
+      "timestamp": 1777550789.0555792,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0020_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0020_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.4009552001953,
+          195.85498046875
+        ],
+        [
+          253.0364532470703,
+          201.46836853027344
+        ],
+        [
+          242.16004943847656,
+          268.368896484375
+        ],
+        [
+          177.54136657714844,
+          264.22357177734375
+        ]
+      ],
+      "rvec": [
+        -2.8657360230846027,
+        -0.09518532600258395,
+        0.031157450884461292
+      ],
+      "tvec": [
+        -0.004891255464489549,
+        -0.00865494062914009,
+        0.259016514446651
+      ],
+      "tvec_z_m": 0.259016514446651,
+      "tvec_norm_m": 0.25920722816581526,
+      "reprojection_error_px": [
+        1.22376255912307,
+        0.44262439758877203,
+        1.5061643692063549,
+        2.0015633881034645
+      ],
+      "reprojection_mean_px": 1.2935286785054152,
+      "reprojection_max_px": 2.0015633881034645,
+      "corner_side_px": 69.9516669834066,
+      "bbox_width_px": 78.635498046875,
+      "bbox_height_px": 72.513916015625
+    },
+    {
+      "sample_idx": 21,
+      "timestamp": 1777550789.2541206,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0021_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0021_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.35853576660156,
+          195.94041442871094
+        ],
+        [
+          253.0406951904297,
+          201.44976806640625
+        ],
+        [
+          242.19630432128906,
+          268.3823547363281
+        ],
+        [
+          177.56219482421875,
+          264.2344055175781
+        ]
+      ],
+      "rvec": [
+        -2.8647968752922326,
+        -0.09428639882761387,
+        0.0351796165444157
+      ],
+      "tvec": [
+        -0.004935351596135203,
+        -0.008585773975830165,
+        0.25896883254539915
+      ],
+      "tvec_z_m": 0.25896883254539915,
+      "tvec_norm_m": 0.2591581166779627,
+      "reprojection_error_px": [
+        1.2033055027138384,
+        0.4335928846982625,
+        1.4919465410084924,
+        1.9812558912128744
+      ],
+      "reprojection_mean_px": 1.277525204908367,
+      "reprojection_max_px": 1.9812558912128744,
+      "corner_side_px": 69.95409200831337,
+      "bbox_width_px": 78.68215942382812,
+      "bbox_height_px": 72.44194030761719
+    },
+    {
+      "sample_idx": 22,
+      "timestamp": 1777550789.387035,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0022_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0022_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.35458374023438,
+          195.89947509765625
+        ],
+        [
+          253.0398712158203,
+          201.52330017089844
+        ],
+        [
+          242.16981506347656,
+          268.38348388671875
+        ],
+        [
+          177.56236267089844,
+          264.2433166503906
+        ]
+      ],
+      "rvec": [
+        -2.8642195917583333,
+        -0.0948409916749584,
+        0.03166895338539942
+      ],
+      "tvec": [
+        -0.004905653432156219,
+        -0.008553387982330487,
+        0.25899832554232965
+      ],
+      "tvec_z_m": 0.25899832554232965,
+      "tvec_norm_m": 0.2591859535455254,
+      "reprojection_error_px": [
+        1.2320701550033513,
+        0.43260545280704893,
+        1.4918611253699021,
+        2.000934780099489
+      ],
+      "reprojection_mean_px": 1.2893678783199478,
+      "reprojection_max_px": 2.000934780099489,
+      "corner_side_px": 69.9457746688003,
+      "bbox_width_px": 78.68528747558594,
+      "bbox_height_px": 72.4840087890625
+    },
+    {
+      "sample_idx": 23,
+      "timestamp": 1777550789.518876,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0023_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0023_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.35647583007812,
+          195.90756225585938
+        ],
+        [
+          253.0873565673828,
+          201.48941040039062
+        ],
+        [
+          242.17408752441406,
+          268.3641052246094
+        ],
+        [
+          177.57122802734375,
+          264.265625
+        ]
+      ],
+      "rvec": [
+        -2.863718170840655,
+        -0.09446362688625644,
+        0.02975801531295279
+      ],
+      "tvec": [
+        -0.0048442171179791035,
+        -0.008550534210798892,
+        0.2589306935172255
+      ],
+      "tvec_z_m": 0.2589306935172255,
+      "tvec_norm_m": 0.25911712046888663,
+      "reprojection_error_px": [
+        1.2112907187924777,
+        0.4376666801947838,
+        1.5123474652374505,
+        1.9986943105015342
+      ],
+      "reprojection_mean_px": 1.2899997936815615,
+      "reprojection_max_px": 1.9986943105015342,
+      "corner_side_px": 69.96354058138321,
+      "bbox_width_px": 78.73088073730469,
+      "bbox_height_px": 72.45654296875
+    },
+    {
+      "sample_idx": 24,
+      "timestamp": 1777550789.6508203,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0024_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0024_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.38352966308594,
+          195.9307861328125
+        ],
+        [
+          253.1076202392578,
+          201.45162963867188
+        ],
+        [
+          242.17205810546875,
+          268.3765563964844
+        ],
+        [
+          177.56675720214844,
+          264.28131103515625
+        ]
+      ],
+      "rvec": [
+        -2.864373847191835,
+        -0.0944108126660451,
+        0.030478382147702456
+      ],
+      "tvec": [
+        -0.004830868443895812,
+        -0.008554181784223826,
+        0.25890747824888427
+      ],
+      "tvec_z_m": 0.25890747824888427,
+      "tvec_norm_m": 0.2590937930733121,
+      "reprojection_error_px": [
+        1.1894996754463707,
+        0.4468870559117672,
+        1.5308872449767201,
+        1.9947681835970752
+      ],
+      "reprojection_mean_px": 1.2905105399829833,
+      "reprojection_max_px": 1.9947681835970752,
+      "corner_side_px": 69.97237362736135,
+      "bbox_width_px": 78.72409057617188,
+      "bbox_height_px": 72.44577026367188
+    },
+    {
+      "sample_idx": 25,
+      "timestamp": 1777550789.782474,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0025_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0025_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.3842010498047,
+          195.73377990722656
+        ],
+        [
+          253.00833129882812,
+          201.50474548339844
+        ],
+        [
+          242.2063751220703,
+          268.3758544921875
+        ],
+        [
+          177.5727996826172,
+          264.2543640136719
+        ]
+      ],
+      "rvec": [
+        -2.8666222838516506,
+        -0.09506549516163992,
+        0.026943312021033505
+      ],
+      "tvec": [
+        -0.00481971119685059,
+        -0.008689536733310105,
+        0.25893830412244534
+      ],
+      "tvec_z_m": 0.25893830412244534,
+      "tvec_norm_m": 0.25912889265087474,
+      "reprojection_error_px": [
+        1.2992615289980303,
+        0.4506868168218205,
+        1.4999483053314047,
+        2.04857102175452
+      ],
+      "reprojection_mean_px": 1.3246169182264438,
+      "reprojection_max_px": 2.04857102175452,
+      "corner_side_px": 69.98328877862859,
+      "bbox_width_px": 78.62413024902344,
+      "bbox_height_px": 72.64207458496094
+    },
+    {
+      "sample_idx": 26,
+      "timestamp": 1777550789.9843767,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0026_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0026_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.36074829101562,
+          195.88401794433594
+        ],
+        [
+          253.04017639160156,
+          201.50244140625
+        ],
+        [
+          242.16635131835938,
+          268.3687438964844
+        ],
+        [
+          177.5803680419922,
+          264.290283203125
+        ]
+      ],
+      "rvec": [
+        -2.8647645465992793,
+        -0.09430741388570021,
+        0.028115256321790544
+      ],
+      "tvec": [
+        -0.004843422520595237,
+        -0.008563636558890707,
+        0.2589865842855029
+      ],
+      "tvec_z_m": 0.2589865842855029,
+      "tvec_norm_m": 0.2591733887819073,
+      "reprojection_error_px": [
+        1.2374002018291266,
+        0.4438875296178537,
+        1.521436741944815,
+        2.0218541003999086
+      ],
+      "reprojection_mean_px": 1.3061446434479258,
+      "reprojection_max_px": 2.0218541003999086,
+      "corner_side_px": 69.95527026681935,
+      "bbox_width_px": 78.67942810058594,
+      "bbox_height_px": 72.48472595214844
+    },
+    {
+      "sample_idx": 27,
+      "timestamp": 1777550790.119282,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0027_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0027_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.306396484375,
+          195.85250854492188
+        ],
+        [
+          253.03713989257812,
+          201.4359893798828
+        ],
+        [
+          242.19044494628906,
+          268.3553161621094
+        ],
+        [
+          177.5838165283203,
+          264.29595947265625
+        ]
+      ],
+      "rvec": [
+        -2.8645645582117054,
+        -0.09358693948275308,
+        0.028932310578512907
+      ],
+      "tvec": [
+        -0.00486691889471141,
+        -0.008606909806967687,
+        0.25884546667289576
+      ],
+      "tvec_z_m": 0.25884546667289576,
+      "tvec_norm_m": 0.2590342475678885,
+      "reprojection_error_px": [
+        1.2438314380339892,
+        0.44485072035580164,
+        1.524900305209743,
+        2.030095358918355
+      ],
+      "reprojection_mean_px": 1.310919455629472,
+      "reprojection_max_px": 2.030095358918355,
+      "corner_side_px": 69.99426649596866,
+      "bbox_width_px": 78.73074340820312,
+      "bbox_height_px": 72.5028076171875
+    },
+    {
+      "sample_idx": 28,
+      "timestamp": 1777550790.3850074,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0028_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0028_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.32681274414062,
+          195.94387817382812
+        ],
+        [
+          253.05810546875,
+          201.481201171875
+        ],
+        [
+          242.14962768554688,
+          268.3851013183594
+        ],
+        [
+          177.56082153320312,
+          264.2660827636719
+        ]
+      ],
+      "rvec": [
+        -2.863565052162736,
+        -0.09436862708003685,
+        0.03272576298686615
+      ],
+      "tvec": [
+        -0.004932032474368959,
+        -0.008523383727395976,
+        0.25893528524610876
+      ],
+      "tvec_z_m": 0.25893528524610876,
+      "tvec_norm_m": 0.25912247096686997,
+      "reprojection_error_px": [
+        1.2060392903839126,
+        0.4367941667805643,
+        1.514679103289849,
+        1.999473141803606
+      ],
+      "reprojection_mean_px": 1.289246425564483,
+      "reprojection_max_px": 1.999473141803606,
+      "corner_side_px": 69.9579644899171,
+      "bbox_width_px": 78.73129272460938,
+      "bbox_height_px": 72.44122314453125
+    },
+    {
+      "sample_idx": 29,
+      "timestamp": 1777550790.5838609,
+      "measured_distance_mm": 250.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0029_250.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0029_250.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          174.33926391601562,
+          195.8172149658203
+        ],
+        [
+          253.06178283691406,
+          201.48391723632812
+        ],
+        [
+          242.20542907714844,
+          268.375
+        ],
+        [
+          177.55828857421875,
+          264.24151611328125
+        ]
+      ],
+      "rvec": [
+        -2.8645350690836517,
+        -0.09478681251008854,
+        0.030307360137208625
+      ],
+      "tvec": [
+        -0.00486659137258313,
+        -0.008618384407872503,
+        0.25884633252514094
+      ],
+      "tvec_z_m": 0.25884633252514094,
+      "tvec_norm_m": 0.2590354881538539,
+      "reprojection_error_px": [
+        1.251166874614191,
+        0.43568859474493604,
+        1.4900204114028974,
+        2.0120253466845357
+      ],
+      "reprojection_mean_px": 1.2972253068616402,
+      "reprojection_max_px": 2.0120253466845357,
+      "corner_side_px": 69.99292087252628,
+      "bbox_width_px": 78.72251892089844,
+      "bbox_height_px": 72.55778503417969
+    },
+    {
+      "sample_idx": 30,
+      "timestamp": 1777550902.93965,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0030_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0030_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          184.82078552246094,
+          192.7505340576172
+        ],
+        [
+          252.4513397216797,
+          199.7269287109375
+        ],
+        [
+          241.215576171875,
+          258.7115478515625
+        ],
+        [
+          184.78140258789062,
+          252.3817901611328
+        ]
+      ],
+      "rvec": [
+        -2.84147462065155,
+        -0.150228713128533,
+        0.12795490399749151
+      ],
+      "tvec": [
+        0.002533643017789495,
+        -0.02757770715552428,
+        0.29767616303747724
+      ],
+      "tvec_z_m": 0.29767616303747724,
+      "tvec_norm_m": 0.29896161512744773,
+      "reprojection_error_px": [
+        1.2588805170996267,
+        0.4140788808713376,
+        0.9845821853084754,
+        1.7050603092603465
+      ],
+      "reprojection_mean_px": 1.0906504731349465,
+      "reprojection_max_px": 1.7050603092603465,
+      "corner_side_px": 61.11348763465949,
+      "bbox_width_px": 67.66993713378906,
+      "bbox_height_px": 65.96101379394531
+    },
+    {
+      "sample_idx": 31,
+      "timestamp": 1777550903.13865,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0031_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0031_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          184.5601806640625,
+          192.816650390625
+        ],
+        [
+          252.19700622558594,
+          199.9793701171875
+        ],
+        [
+          240.70790100097656,
+          258.7248840332031
+        ],
+        [
+          184.69888305664062,
+          252.6750030517578
+        ]
+      ],
+      "rvec": [
+        -2.8383090665972603,
+        -0.14926091623741103,
+        0.10499733145348576
+      ],
+      "tvec": [
+        0.0021807052779485164,
+        -0.02718278837984068,
+        0.29814750712377536
+      ],
+      "tvec_z_m": 0.29814750712377536,
+      "tvec_norm_m": 0.29939204308687656,
+      "reprojection_error_px": [
+        1.3328263821230741,
+        0.4145331176817495,
+        1.1915570619978164,
+        1.908323894770147
+      ],
+      "reprojection_mean_px": 1.2118101141431967,
+      "reprojection_max_px": 1.908323894770147,
+      "corner_side_px": 61.01670424687421,
+      "bbox_width_px": 67.63682556152344,
+      "bbox_height_px": 65.90823364257812
+    },
+    {
+      "sample_idx": 32,
+      "timestamp": 1777550903.3393328,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0032_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0032_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          185.00277709960938,
+          192.9127960205078
+        ],
+        [
+          252.94859313964844,
+          200.1488037109375
+        ],
+        [
+          241.27438354492188,
+          259.0490417480469
+        ],
+        [
+          184.77468872070312,
+          252.54132080078125
+        ]
+      ],
+      "rvec": [
+        -2.8358434701510373,
+        -0.15517472167788424,
+        0.12289005980921945
+      ],
+      "tvec": [
+        0.002989712063877272,
+        -0.02673273499882362,
+        0.2970094158109896
+      ],
+      "tvec_z_m": 0.2970094158109896,
+      "tvec_norm_m": 0.2982250334548184,
+      "reprojection_error_px": [
+        1.1983711081002555,
+        0.37183485577303044,
+        0.9857183179890869,
+        1.6659635596120468
+      ],
+      "reprojection_mean_px": 1.055471960368605,
+      "reprojection_max_px": 1.6659635596120468,
+      "corner_side_px": 61.21956666259244,
+      "bbox_width_px": 68.17390441894531,
+      "bbox_height_px": 66.13624572753906
+    },
+    {
+      "sample_idx": 33,
+      "timestamp": 1777550903.4723172,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0033_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0033_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          185.65579223632812,
+          192.8790740966797
+        ],
+        [
+          253.20919799804688,
+          200.23463439941406
+        ],
+        [
+          241.47467041015625,
+          259.0675048828125
+        ],
+        [
+          185.40611267089844,
+          252.7604217529297
+        ]
+      ],
+      "rvec": [
+        -2.8430963440765833,
+        -0.15443582979088336,
+        0.10847763967846862
+      ],
+      "tvec": [
+        0.004193260444681767,
+        -0.026793874199551544,
+        0.29804197454795545
+      ],
+      "tvec_z_m": 0.29804197454795545,
+      "tvec_norm_m": 0.29927330940166125,
+      "reprojection_error_px": [
+        1.3512189138255086,
+        0.4369257537507091,
+        1.199036402090606,
+        1.9192143056836546
+      ],
+      "reprojection_mean_px": 1.2265988438376196,
+      "reprojection_max_px": 1.9192143056836546,
+      "corner_side_px": 61.06211110534744,
+      "bbox_width_px": 67.80308532714844,
+      "bbox_height_px": 66.18843078613281
+    },
+    {
+      "sample_idx": 34,
+      "timestamp": 1777550903.6035748,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0034_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0034_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          185.57847595214844,
+          192.8723907470703
+        ],
+        [
+          253.2547149658203,
+          200.33349609375
+        ],
+        [
+          241.46853637695312,
+          259.1316223144531
+        ],
+        [
+          185.3195037841797,
+          252.76467895507812
+        ]
+      ],
+      "rvec": [
+        -2.840783056843129,
+        -0.1554924841724826,
+        0.10773403198117923
+      ],
+      "tvec": [
+        0.004117231695215476,
+        -0.026616692043481455,
+        0.2977313733836029
+      ],
+      "tvec_z_m": 0.2977313733836029,
+      "tvec_norm_m": 0.2989471033294285,
+      "reprojection_error_px": [
+        1.348343054609218,
+        0.43515495815848065,
+        1.1586930361269712,
+        1.889702519791847
+      ],
+      "reprojection_mean_px": 1.2079733921716291,
+      "reprojection_max_px": 1.889702519791847,
+      "corner_side_px": 61.11394104110769,
+      "bbox_width_px": 67.93521118164062,
+      "bbox_height_px": 66.25923156738281
+    },
+    {
+      "sample_idx": 35,
+      "timestamp": 1777550903.8027444,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0035_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0035_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          184.50430297851562,
+          192.4891357421875
+        ],
+        [
+          252.08340454101562,
+          199.30357360839844
+        ],
+        [
+          240.7270050048828,
+          258.51617431640625
+        ],
+        [
+          184.5588836669922,
+          252.1597137451172
+        ]
+      ],
+      "rvec": [
+        -2.839964887152986,
+        -0.15150614041482807,
+        0.14494273408747144
+      ],
+      "tvec": [
+        0.001529240635515167,
+        -0.028270730154449832,
+        0.29764022345657404
+      ],
+      "tvec_z_m": 0.29764022345657404,
+      "tvec_norm_m": 0.2989837376508401,
+      "reprojection_error_px": [
+        1.2721164311431639,
+        0.37843111779037353,
+        1.0912303855466632,
+        1.8169156088242617
+      ],
+      "reprojection_mean_px": 1.1396733858261157,
+      "reprojection_max_px": 1.8169156088242617,
+      "corner_side_px": 61.102712406179606,
+      "bbox_width_px": 67.5791015625,
+      "bbox_height_px": 66.02703857421875
+    },
+    {
+      "sample_idx": 36,
+      "timestamp": 1777550903.9355721,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0036_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0036_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          180.45506286621094,
+          192.46524047851562
+        ],
+        [
+          248.3444061279297,
+          198.51235961914062
+        ],
+        [
+          238.1760711669922,
+          257.79376220703125
+        ],
+        [
+          181.39169311523438,
+          252.26683044433594
+        ]
+      ],
+      "rvec": [
+        -2.8417462357229057,
+        -0.13343671134961352,
+        0.11838520971550147
+      ],
+      "tvec": [
+        -0.005865167220093565,
+        -0.02897434903553843,
+        0.29663714789400053
+      ],
+      "tvec_z_m": 0.29663714789400053,
+      "tvec_norm_m": 0.29810654236235745,
+      "reprojection_error_px": [
+        1.0861883785493538,
+        0.3221684701419115,
+        0.9578270524252093,
+        1.562317424219868
+      ],
+      "reprojection_mean_px": 0.9821253313340856,
+      "reprojection_max_px": 1.562317424219868,
+      "corner_side_px": 61.2917304188975,
+      "bbox_width_px": 67.88934326171875,
+      "bbox_height_px": 65.32852172851562
+    },
+    {
+      "sample_idx": 37,
+      "timestamp": 1777550904.102801,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0037_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0037_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          180.254638671875,
+          192.466552734375
+        ],
+        [
+          248.4351348876953,
+          198.46047973632812
+        ],
+        [
+          238.16949462890625,
+          257.5846252441406
+        ],
+        [
+          181.3422088623047,
+          252.27951049804688
+        ]
+      ],
+      "rvec": [
+        -2.835696295781325,
+        -0.13013523966932328,
+        0.1000218899179235
+      ],
+      "tvec": [
+        -0.005731052452915205,
+        -0.028978137805837884,
+        0.29645953010421694
+      ],
+      "tvec_z_m": 0.29645953010421694,
+      "tvec_norm_m": 0.29792755901817025,
+      "reprojection_error_px": [
+        1.0064252438347847,
+        0.29350458374385113,
+        0.9794588997446955,
+        1.510778757165278
+      ],
+      "reprojection_mean_px": 0.9475418711221524,
+      "reprojection_max_px": 1.510778757165278,
+      "corner_side_px": 61.33735377424739,
+      "bbox_width_px": 68.18049621582031,
+      "bbox_height_px": 65.11807250976562
+    },
+    {
+      "sample_idx": 38,
+      "timestamp": 1777550904.303359,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0038_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0038_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          180.00059509277344,
+          192.47093200683594
+        ],
+        [
+          248.40435791015625,
+          198.3896942138672
+        ],
+        [
+          238.06752014160156,
+          257.43463134765625
+        ],
+        [
+          181.35260009765625,
+          252.46653747558594
+        ]
+      ],
+      "rvec": [
+        -2.8315527421726685,
+        -0.12533188626597033,
+        0.08069446812781166
+      ],
+      "tvec": [
+        -0.005702491976816144,
+        -0.028886709050437307,
+        0.2962815227628467
+      ],
+      "tvec_z_m": 0.2962815227628467,
+      "tvec_norm_m": 0.2977409966819845,
+      "reprojection_error_px": [
+        1.0037589245688139,
+        0.3017834959313663,
+        1.092639756490168,
+        1.583881089179605
+      ],
+      "reprojection_mean_px": 0.9955158165424882,
+      "reprojection_max_px": 1.583881089179605,
+      "corner_side_px": 61.386304774642795,
+      "bbox_width_px": 68.40376281738281,
+      "bbox_height_px": 64.96369934082031
+    },
+    {
+      "sample_idx": 39,
+      "timestamp": 1777550904.4375014,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0039_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0039_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          182.692626953125,
+          192.64529418945312
+        ],
+        [
+          250.46949768066406,
+          198.90968322753906
+        ],
+        [
+          239.5923614501953,
+          258.414306640625
+        ],
+        [
+          183.20944213867188,
+          252.45211791992188
+        ]
+      ],
+      "rvec": [
+        -2.8424385301903463,
+        -0.1424742970522455,
+        0.14405254477011611
+      ],
+      "tvec": [
+        -0.0018371956167494187,
+        -0.028201858033681745,
+        0.2966954752317222
+      ],
+      "tvec_z_m": 0.2966954752317222,
+      "tvec_norm_m": 0.29803846246292376,
+      "reprojection_error_px": [
+        1.1885024307482175,
+        0.3348796299942112,
+        1.121361327026304,
+        1.7804245443253395
+      ],
+      "reprojection_mean_px": 1.106291983023518,
+      "reprojection_max_px": 1.7804245443253395,
+      "corner_side_px": 61.26567109620095,
+      "bbox_width_px": 67.77687072753906,
+      "bbox_height_px": 65.76901245117188
+    },
+    {
+      "sample_idx": 40,
+      "timestamp": 1777550904.6363068,
+      "measured_distance_mm": 300.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0040_300.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0040_300.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          184.1588134765625,
+          192.73883056640625
+        ],
+        [
+          252.15769958496094,
+          199.37937927246094
+        ],
+        [
+          240.7282257080078,
+          258.539794921875
+        ],
+        [
+          184.62269592285156,
+          252.68113708496094
+        ]
+      ],
+      "rvec": [
+        -2.8355091853796073,
+        -0.14315681868401864,
+        0.11580470828622755
+      ],
+      "tvec": [
+        0.0017627593637703162,
+        -0.027538826540832482,
+        0.297038283707328
+      ],
+      "tvec_z_m": 0.297038283707328,
+      "tvec_norm_m": 0.2983173415603184,
+      "reprojection_error_px": [
+        1.2461566137628157,
+        0.36892071190741216,
+        1.2595460569009431,
+        1.90832961549457
+      ],
+      "reprojection_mean_px": 1.1957382495164353,
+      "reprojection_max_px": 1.90832961549457,
+      "corner_side_px": 61.23285259792526,
+      "bbox_width_px": 67.99888610839844,
+      "bbox_height_px": 65.80096435546875
+    },
+    {
+      "sample_idx": 41,
+      "timestamp": 1777550973.4498644,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0041_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0041_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.71034240722656,
+          192.5767059326172
+        ],
+        [
+          247.4439239501953,
+          197.51007080078125
+        ],
+        [
+          239.10586547851562,
+          249.27207946777344
+        ],
+        [
+          189.71926879882812,
+          244.36923217773438
+        ]
+      ],
+      "rvec": [
+        -2.8357105356198127,
+        -0.13381143621822308,
+        0.1727685848679247
+      ],
+      "tvec": [
+        0.004861189038160127,
+        -0.047631009272805926,
+        0.34469930604765103
+      ],
+      "tvec_z_m": 0.34469930604765103,
+      "tvec_norm_m": 0.3480085570685627,
+      "reprojection_error_px": [
+        1.04101903289916,
+        0.3487227702466637,
+        0.7004553320827743,
+        1.3374349141494217
+      ],
+      "reprojection_mean_px": 0.856908012344505,
+      "reprojection_max_px": 1.3374349141494217,
+      "corner_side_px": 52.94878577802712,
+      "bbox_width_px": 57.73358154296875,
+      "bbox_height_px": 56.69537353515625
+    },
+    {
+      "sample_idx": 42,
+      "timestamp": 1777550973.6803403,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0042_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0042_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.7157745361328,
+          192.574462890625
+        ],
+        [
+          247.46310424804688,
+          197.49484252929688
+        ],
+        [
+          239.09654235839844,
+          249.26406860351562
+        ],
+        [
+          189.69509887695312,
+          244.31298828125
+        ]
+      ],
+      "rvec": [
+        -2.834771991689218,
+        -0.1346827904849451,
+        0.1760899833734892
+      ],
+      "tvec": [
+        0.0048201894951587125,
+        -0.04767510515238972,
+        0.34466505220198057
+      ],
+      "tvec_z_m": 0.34466505220198057,
+      "tvec_norm_m": 0.34798009725766593,
+      "reprojection_error_px": [
+        1.0173841176335636,
+        0.3359006758548333,
+        0.6855677412107483,
+        1.31131966479326
+      ],
+      "reprojection_mean_px": 0.8375430498731014,
+      "reprojection_max_px": 1.31131966479326,
+      "corner_side_px": 52.946241607059925,
+      "bbox_width_px": 57.76800537109375,
+      "bbox_height_px": 56.689605712890625
+    },
+    {
+      "sample_idx": 43,
+      "timestamp": 1777550973.9478683,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0043_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0043_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.72445678710938,
+          192.56373596191406
+        ],
+        [
+          247.4635772705078,
+          197.53475952148438
+        ],
+        [
+          239.05905151367188,
+          249.27784729003906
+        ],
+        [
+          189.70777893066406,
+          244.36221313476562
+        ]
+      ],
+      "rvec": [
+        -2.835162642422349,
+        -0.13469404989656888,
+        0.17149203981602154
+      ],
+      "tvec": [
+        0.00485787800606448,
+        -0.04762387500567314,
+        0.34474399699553676
+      ],
+      "tvec_z_m": 0.34474399699553676,
+      "tvec_norm_m": 0.3480518006184373,
+      "reprojection_error_px": [
+        1.0395577573064834,
+        0.341972350072216,
+        0.7163277927103555,
+        1.3489594394178424
+      ],
+      "reprojection_mean_px": 0.8617043348767244,
+      "reprojection_max_px": 1.3489594394178424,
+      "corner_side_px": 52.94197071667245,
+      "bbox_width_px": 57.75579833984375,
+      "bbox_height_px": 56.714111328125
+    },
+    {
+      "sample_idx": 44,
+      "timestamp": 1777550974.211377,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0044_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0044_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.70066833496094,
+          192.55792236328125
+        ],
+        [
+          247.4519500732422,
+          197.52291870117188
+        ],
+        [
+          239.08908081054688,
+          249.27296447753906
+        ],
+        [
+          189.7073974609375,
+          244.3579864501953
+        ]
+      ],
+      "rvec": [
+        -2.834961319495978,
+        -0.13420821096612875,
+        0.1720176914084067
+      ],
+      "tvec": [
+        0.004846382417177515,
+        -0.047626662312933964,
+        0.34466751989318756
+      ],
+      "tvec_z_m": 0.34466751989318756,
+      "tvec_norm_m": 0.34797627168375234,
+      "reprojection_error_px": [
+        1.043457163524073,
+        0.3498729364093282,
+        0.7002798760456375,
+        1.3393647882890498
+      ],
+      "reprojection_mean_px": 0.8582436910670221,
+      "reprojection_max_px": 1.3393647882890498,
+      "corner_side_px": 52.95286747060275,
+      "bbox_width_px": 57.75128173828125,
+      "bbox_height_px": 56.71504211425781
+    },
+    {
+      "sample_idx": 45,
+      "timestamp": 1777550974.4173787,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0045_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0045_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.7254638671875,
+          192.55787658691406
+        ],
+        [
+          247.4729766845703,
+          197.53370666503906
+        ],
+        [
+          239.077392578125,
+          249.2830352783203
+        ],
+        [
+          189.72828674316406,
+          244.3681640625
+        ]
+      ],
+      "rvec": [
+        -2.8347777534495036,
+        -0.1345455088964419,
+        0.17226314427768175
+      ],
+      "tvec": [
+        0.004880791833613619,
+        -0.04760853236857886,
+        0.3446955881466549
+      ],
+      "tvec_z_m": 0.3446955881466549,
+      "tvec_norm_m": 0.34800207322799304,
+      "reprojection_error_px": [
+        1.0483958451310933,
+        0.34656344209400913,
+        0.714716773346543,
+        1.3551120326362176
+      ],
+      "reprojection_mean_px": 0.8661970233019658,
+      "reprojection_max_px": 1.3551120326362176,
+      "corner_side_px": 52.94774003748777,
+      "bbox_width_px": 57.74751281738281,
+      "bbox_height_px": 56.72515869140625
+    },
+    {
+      "sample_idx": 46,
+      "timestamp": 1777550974.712031,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0046_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0046_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.7193145751953,
+          192.57127380371094
+        ],
+        [
+          247.45716857910156,
+          197.53555297851562
+        ],
+        [
+          239.07662963867188,
+          249.25540161132812
+        ],
+        [
+          189.7271728515625,
+          244.36170959472656
+        ]
+      ],
+      "rvec": [
+        -2.834884887086383,
+        -0.13402987413441075,
+        0.16985385558377866
+      ],
+      "tvec": [
+        0.004893915740891003,
+        -0.04764021119028575,
+        0.344824091999303
+      ],
+      "tvec_z_m": 0.344824091999303,
+      "tvec_norm_m": 0.34813387447457295,
+      "reprojection_error_px": [
+        1.0404655064595432,
+        0.3449974455269192,
+        0.713015031830527,
+        1.3459214437788414
+      ],
+      "reprojection_mean_px": 0.8610998568989576,
+      "reprojection_max_px": 1.3459214437788414,
+      "corner_side_px": 52.93181052212853,
+      "bbox_width_px": 57.73785400390625,
+      "bbox_height_px": 56.68412780761719
+    },
+    {
+      "sample_idx": 47,
+      "timestamp": 1777550974.8749232,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0047_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0047_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.7224578857422,
+          192.54527282714844
+        ],
+        [
+          247.45700073242188,
+          197.5120391845703
+        ],
+        [
+          239.06558227539062,
+          249.26161193847656
+        ],
+        [
+          189.7108612060547,
+          244.333984375
+        ]
+      ],
+      "rvec": [
+        -2.8348726601867216,
+        -0.13477646005114818,
+        0.17332331685013513
+      ],
+      "tvec": [
+        0.004839170118857484,
+        -0.04768249867864085,
+        0.3447377416239396
+      ],
+      "tvec_z_m": 0.3447377416239396,
+      "tvec_norm_m": 0.3480533705448806,
+      "reprojection_error_px": [
+        1.04099632870315,
+        0.344134608421999,
+        0.7076612980327,
+        1.344611607901886
+      ],
+      "reprojection_mean_px": 0.8593509607649337,
+      "reprojection_max_px": 1.344611607901886,
+      "corner_side_px": 52.94052828402545,
+      "bbox_width_px": 57.74613952636719,
+      "bbox_height_px": 56.716339111328125
+    },
+    {
+      "sample_idx": 48,
+      "timestamp": 1777550975.0075784,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0048_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0048_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.70977783203125,
+          192.56179809570312
+        ],
+        [
+          247.4514923095703,
+          197.5018768310547
+        ],
+        [
+          239.0574493408203,
+          249.2671661376953
+        ],
+        [
+          189.7087860107422,
+          244.34288024902344
+        ]
+      ],
+      "rvec": [
+        -2.8346747457577477,
+        -0.13464312882726898,
+        0.1748673352770456
+      ],
+      "tvec": [
+        0.004804356596301117,
+        -0.047661089438673365,
+        0.34470230064532653
+      ],
+      "tvec_z_m": 0.34470230064532653,
+      "tvec_norm_m": 0.34801485221031403,
+      "reprojection_error_px": [
+        1.0355578982259566,
+        0.3371786113845279,
+        0.7119789434975764,
+        1.3455213529733105
+      ],
+      "reprojection_mean_px": 0.8575592015203428,
+      "reprojection_max_px": 1.3455213529733105,
+      "corner_side_px": 52.942230243665875,
+      "bbox_width_px": 57.742706298828125,
+      "bbox_height_px": 56.70536804199219
+    },
+    {
+      "sample_idx": 49,
+      "timestamp": 1777550975.2068703,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0049_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0049_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.72073364257812,
+          192.60125732421875
+        ],
+        [
+          247.47340393066406,
+          197.52752685546875
+        ],
+        [
+          239.0667266845703,
+          249.23023986816406
+        ],
+        [
+          189.679931640625,
+          244.33204650878906
+        ]
+      ],
+      "rvec": [
+        -2.83518633877355,
+        -0.13411565560915173,
+        0.16738386431206406
+      ],
+      "tvec": [
+        0.00489733079027184,
+        -0.047672566339474774,
+        0.34488277864989775
+      ],
+      "tvec_z_m": 0.34488277864989775,
+      "tvec_norm_m": 0.3481964796483953,
+      "reprojection_error_px": [
+        0.9964326710914446,
+        0.3243442187880743,
+        0.7069378863119387,
+        1.3063662958052666
+      ],
+      "reprojection_mean_px": 0.833520267999181,
+      "reprojection_max_px": 1.3063662958052666,
+      "corner_side_px": 52.92600095284992,
+      "bbox_width_px": 57.79347229003906,
+      "bbox_height_px": 56.62898254394531
+    },
+    {
+      "sample_idx": 50,
+      "timestamp": 1777550975.3380785,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0050_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0050_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.71987915039062,
+          192.56517028808594
+        ],
+        [
+          247.44422912597656,
+          197.53976440429688
+        ],
+        [
+          239.05587768554688,
+          249.25628662109375
+        ],
+        [
+          189.69317626953125,
+          244.3129425048828
+        ]
+      ],
+      "rvec": [
+        -2.834545182149058,
+        -0.13500112192439592,
+        0.1728348785342077
+      ],
+      "tvec": [
+        0.004818297027300864,
+        -0.047679156150367254,
+        0.34484942088519327
+      ],
+      "tvec_z_m": 0.34484942088519327,
+      "tvec_norm_m": 0.3481632390162804,
+      "reprojection_error_px": [
+        1.0299573223526466,
+        0.3426480275742533,
+        0.6939348939549651,
+        1.3253684400129622
+      ],
+      "reprojection_mean_px": 0.8479771709737068,
+      "reprojection_max_px": 1.3253684400129622,
+      "corner_side_px": 52.92202120400836,
+      "bbox_width_px": 57.75105285644531,
+      "bbox_height_px": 56.69111633300781
+    },
+    {
+      "sample_idx": 51,
+      "timestamp": 1777550976.0708673,
+      "measured_distance_mm": 350.0,
+      "image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350_processed_recalc/processed_images/sample_0051_350.0mm_processed.png",
+      "raw_image_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/pnp_scale_test_rigid_150_350/images/sample_0051_350.0mm.png",
+      "projection_model": "rectified_pinhole",
+      "corners": [
+        [
+          189.71066284179688,
+          192.5435791015625
+        ],
+        [
+          247.46212768554688,
+          197.4970703125
+        ],
+        [
+          239.0963592529297,
+          249.2730255126953
+        ],
+        [
+          189.68490600585938,
+          244.31719970703125
+        ]
+      ],
+      "rvec": [
+        -2.835071262359533,
+        -0.13489267951352657,
+        0.17520297618804728
+      ],
+      "tvec": [
+        0.004815091144820909,
+        -0.04767729951082996,
+        0.34458867138499377
+      ],
+      "tvec_z_m": 0.34458867138499377,
+      "tvec_norm_m": 0.34790467435528016,
+      "reprojection_error_px": [
+        1.0307124993156773,
+        0.3457216805344922,
+        0.6848844833790232,
+        1.3196468232693688
+      ],
+      "reprojection_mean_px": 0.8452413716246404,
+      "reprojection_max_px": 1.3196468232693688,
+      "corner_side_px": 52.96098850555812,
+      "bbox_width_px": 57.7772216796875,
+      "bbox_height_px": 56.72944641113281
+    }
+  ],
+  "summary": {
+    "distances": [
+      {
+        "measured_distance_mm": 200.0,
+        "count": 10,
+        "tvec_z_mm": {
+          "mean": 205.74001802667644,
+          "median": 205.7391721830178,
+          "std": 0.0365289842100631,
+          "max": 205.8210906128545,
+          "min": 205.6980926801313
+        },
+        "tvec_norm_mm": {
+          "mean": 206.29358827064297,
+          "median": 206.29290843173123,
+          "std": 0.03645628113056407,
+          "max": 206.37415451066937,
+          "min": 206.2519508345894
+        },
+        "reprojection_px": {
+          "mean": 1.2736842359921534,
+          "median": 1.3177140371224674,
+          "std": 0.6168193550692483,
+          "max": 1.9916236391734579,
+          "min": 0.4546826197869761
+        },
+        "corner_side_px": {
+          "mean": 87.13280260891408,
+          "median": 87.13502162449146,
+          "std": 0.0162725252722491,
+          "max": 87.15078558453902,
+          "min": 87.09810758218485
+        },
+        "bbox_width_px": {
+          "mean": 102.84773559570313,
+          "median": 102.85020446777344,
+          "std": 0.029126045239049513,
+          "max": 102.884033203125,
+          "min": 102.79872131347656
+        },
+        "bbox_height_px": {
+          "mean": 86.87751007080078,
+          "median": 86.87674713134766,
+          "std": 0.02575414426578751,
+          "max": 86.91926574707031,
+          "min": 86.84022521972656
+        },
+        "scale_error_z": 0.02870009013338226,
+        "scale_error_norm": 0.031467941353214846
+      },
+      {
+        "measured_distance_mm": 250.0,
+        "count": 10,
+        "tvec_z_mm": {
+          "mean": 258.9373817152583,
+          "median": 258.93679468427706,
+          "std": 0.058754396730564554,
+          "max": 259.016514446651,
+          "min": 258.8454666728958
+        },
+        "tvec_norm_mm": {
+          "mean": 259.12567000528963,
+          "median": 259.12568180887234,
+          "std": 0.0588938669003111,
+          "max": 259.20722816581525,
+          "min": 259.0342475678885
+        },
+        "reprojection_px": {
+          "mean": 1.2969084845128238,
+          "median": 1.3946409702004638,
+          "std": 0.5753606934568541,
+          "max": 2.04857102175452,
+          "min": 0.43260545280704893
+        },
+        "corner_side_px": {
+          "mean": 69.96711587731247,
+          "median": 69.96075253565016,
+          "std": 0.017615795725974916,
+          "max": 69.99426649596866,
+          "min": 69.9457746688003
+        },
+        "bbox_width_px": {
+          "mean": 78.6946029663086,
+          "median": 78.70390319824219,
+          "std": 0.040206216045713075,
+          "max": 78.73129272460938,
+          "min": 78.62413024902344
+        },
+        "bbox_height_px": {
+          "mean": 72.49707946777343,
+          "median": 72.48436737060547,
+          "std": 0.06305604283134454,
+          "max": 72.64207458496094,
+          "min": 72.44122314453125
+        },
+        "scale_error_z": 0.035749526861033276,
+        "scale_error_norm": 0.03650268002115853
+      },
+      {
+        "measured_distance_mm": 300.0,
+        "count": 11,
+        "tvec_z_mm": {
+          "mean": 297.2144197327717,
+          "median": 297.038283707328,
+          "std": 0.6582558473225746,
+          "max": 298.14750712377537,
+          "min": 296.2815227628467
+        },
+        "tvec_norm_mm": {
+          "mean": 298.5376131033479,
+          "median": 298.3173415603184,
+          "std": 0.5835879846450973,
+          "max": 299.3920430868766,
+          "min": 297.7409966819845
+        },
+        "reprojection_px": {
+          "mean": 1.1053992200927996,
+          "median": 1.1735977334375942,
+          "std": 0.509568471883117,
+          "max": 1.9192143056836546,
+          "min": 0.29350458374385113
+        },
+        "corner_side_px": {
+          "mean": 61.19476688715224,
+          "median": 61.21956666259244,
+          "std": 0.12017890344935778,
+          "max": 61.386304774642795,
+          "min": 61.01670424687421
+        },
+        "bbox_width_px": {
+          "mean": 67.91340221058239,
+          "median": 67.88934326171875,
+          "std": 0.258138250611198,
+          "max": 68.40376281738281,
+          "min": 67.5791015625
+        },
+        "bbox_height_px": {
+          "mean": 65.76913313432173,
+          "median": 65.90823364257812,
+          "std": 0.4405923502010957,
+          "max": 66.25923156738281,
+          "min": 64.96369934082031
+        },
+        "scale_error_z": -0.009285267557427646,
+        "scale_error_norm": -0.004874622988840338
+      },
+      {
+        "measured_distance_mm": 350.0,
+        "count": 11,
+        "tvec_z_mm": {
+          "mean": 344.7324062248786,
+          "median": 344.70230064532655,
+          "std": 0.08811210688006535,
+          "max": 344.8827786498978,
+          "min": 344.58867138499375
+        },
+        "tvec_norm_mm": {
+          "mean": 348.04411728237596,
+          "median": 348.014852210314,
+          "std": 0.08811349648618076,
+          "max": 348.19647964839527,
+          "min": 347.9046743552802
+        },
+        "reprojection_px": {
+          "mean": 0.8532131764768255,
+          "median": 0.8563802319009001,
+          "std": 0.37455973058441017,
+          "max": 1.3551120326362176,
+          "min": 0.3243442187880743
+        },
+        "corner_side_px": {
+          "mean": 52.941925938371476,
+          "median": 52.942230243665875,
+          "std": 0.011561825307245074,
+          "max": 52.96098850555812,
+          "min": 52.92202120400836
+        },
+        "bbox_width_px": {
+          "mean": 57.75496604225852,
+          "median": 57.75105285644531,
+          "std": 0.01792073204282309,
+          "max": 57.79347229003906,
+          "min": 57.73358154296875
+        },
+        "bbox_height_px": {
+          "mean": 56.6995156028054,
+          "median": 56.70536804199219,
+          "std": 0.027789238074550388,
+          "max": 56.72944641113281,
+          "min": 56.62898254394531
+        },
+        "scale_error_z": -0.015050267928918282,
+        "scale_error_norm": -0.0055882363360686416
+      }
+    ],
+    "adjacent_deltas": [
+      {
+        "from_mm": 200.0,
+        "to_mm": 250.0,
+        "measured_delta_mm": 50.0,
+        "pnp_delta_z_mm": 53.19736368858187,
+        "pnp_delta_norm_mm": 52.832081734646664,
+        "delta_scale_error_z": 0.06394727377163756,
+        "delta_scale_error_norm": 0.05664163469293326
+      },
+      {
+        "from_mm": 250.0,
+        "to_mm": 300.0,
+        "measured_delta_mm": 50.0,
+        "pnp_delta_z_mm": 38.277038017513405,
+        "pnp_delta_norm_mm": 39.41194309805826,
+        "delta_scale_error_z": -0.23445923964973192,
+        "delta_scale_error_norm": -0.21176113803883478
+      },
+      {
+        "from_mm": 300.0,
+        "to_mm": 350.0,
+        "measured_delta_mm": 50.0,
+        "pnp_delta_z_mm": 47.5179864921069,
+        "pnp_delta_norm_mm": 49.50650417902807,
+        "delta_scale_error_z": -0.04964027015786199,
+        "delta_scale_error_norm": -0.009869916419438574
+      }
+    ],
+    "excluded_samples": [],
+    "processed_detection_failed_count": 10
+  }
+}

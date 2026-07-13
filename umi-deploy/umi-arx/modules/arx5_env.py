@@ -5,7 +5,7 @@ import time
 import shutil
 import math
 from multiprocessing.managers import SharedMemoryManager
-from modules.arx5_controller import Arx5Controller
+from modules.arx5_controller import Arx5Controller, GripperControlPhase
 from peripherals.multi_uvc_camera import MultiUvcCamera, VideoRecorder
 from modules.timestamp_accumulator import TimestampActionAccumulator, ObsAccumulator
 from utils.cv_util import draw_predefined_mask
@@ -31,6 +31,8 @@ class Arx5Env:
         camera_reorder=None,
         no_mirror=False,
         fisheye_converter=None,
+        gripper_camera_resolution=(640, 480),
+        enable_video_recording=True,
         mirror_swap=False,
         # this latency compensates receive_timestamp
         # all in seconds
@@ -80,12 +82,15 @@ class Arx5Env:
             max_resolution=multi_cam_vis_resolution,
         )
 
+        gripper_camera_resolution = tuple(int(x) for x in gripper_camera_resolution)
+
         # HACK: Separate video setting for each camera
         # Elagto Cam Link 4k records at 4k 30fps
         # Other capture card records at 720p 60fps
         resolution = list()
         capture_fps = list()
         cap_buffer_size = list()
+        capture_fourcc = list()
         video_recorder = list()
         transform = list()
         vis_transform = list()
@@ -94,6 +99,7 @@ class Arx5Env:
                 res = (3840, 2160)
                 fps = 30
                 buf = 3
+                fourcc = None
                 bit_rate = 6000 * 1000
 
                 def tf4k(data, input_res=res):
@@ -112,9 +118,10 @@ class Arx5Env:
 
                 transform.append(tf4k)
             else:
-                res = (1600, 1296)  # gen gripper center camera native resolution
+                res = gripper_camera_resolution
                 fps = 30
                 buf = 1
+                fourcc = "MJPG"
                 bit_rate = 3000 * 1000
 
                 is_mirror = None
@@ -150,8 +157,17 @@ class Arx5Env:
                             use_aa=True,
                         )
                     else:
+                        img = draw_predefined_mask(
+                            img,
+                            color=(0, 0, 0),
+                            mirror=no_mirror,
+                            gripper=True,
+                            finger=False,
+                        )
                         img = fisheye_converter.forward(img)
                         img = img[..., ::-1]
+                        if is_mirror is not None:
+                            img[is_mirror] = img[:, ::-1, :][is_mirror]
                     if obs_float32:
                         img = img.astype(np.float32) / 255
                     data["color"] = img
@@ -162,11 +178,15 @@ class Arx5Env:
             resolution.append(res)
             capture_fps.append(fps)
             cap_buffer_size.append(buf)
-            video_recorder.append(
-                VideoRecorder.create_hevc_nvenc(
-                    fps=fps, input_pix_fmt="bgr24", bit_rate=bit_rate
+            capture_fourcc.append(fourcc)
+            if enable_video_recording:
+                video_recorder.append(
+                    VideoRecorder.create_hevc_nvenc(
+                        fps=fps, input_pix_fmt="bgr24", bit_rate=bit_rate
+                    )
                 )
-            )
+            else:
+                video_recorder.append(None)
 
             def vis_tf(data, input_res=res):
                 img = data["color"]
@@ -190,9 +210,11 @@ class Arx5Env:
             get_max_k=max_obs_buffer_size,
             receive_latency=camera_obs_latency,
             cap_buffer_size=cap_buffer_size,
+            capture_fourcc=capture_fourcc,
             transform=transform,
             # vis_transform=vis_transform, # TODO: vis_transform doesn't work?
             video_recorder=video_recorder,
+            enable_video_recording=enable_video_recording,
             verbose=False,
         )
 
@@ -233,6 +255,7 @@ class Arx5Env:
         self.output_dir = output_dir
         self.video_dir = video_dir
         self.replay_buffer = replay_buffer
+        self.enable_video_recording = enable_video_recording
         # temp memory buffers
         self.last_camera_data = None
         # recording buffers
@@ -291,6 +314,61 @@ class Arx5Env:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
+
+    def get_camera_health(self):
+        now = time.time()
+        health = list()
+        for camera_idx, camera in enumerate(self.camera.cameras.values()):
+            status = camera.get_health_status()
+            last_frame_time = status["last_frame_time"]
+            stale_for = None
+            if last_frame_time > 0:
+                stale_for = max(0.0, now - last_frame_time)
+            status["camera_idx"] = camera_idx
+            status["stale_for"] = stale_for
+            health.append(status)
+        return health
+
+    def get_camera_health_issues(
+        self, min_ring_buffer_count=None, max_frame_staleness=None
+    ):
+        health = self.get_camera_health()
+        issues = list()
+        for status in health:
+            prefix = f"camera{status['camera_idx']} ({status['dev_video_path']})"
+            if not status["process_alive"]:
+                issues.append(f"{prefix}: capture process exited")
+            if status["failed"]:
+                issues.append(
+                    f"{prefix}: fatal capture failure after {status['failure_count']} error(s)"
+                )
+            elif status["recovering"]:
+                issues.append(f"{prefix}: camera is still recovering from a capture failure")
+            if min_ring_buffer_count is not None:
+                if status["ring_buffer_count"] < min_ring_buffer_count:
+                    issues.append(
+                        f"{prefix}: ring buffer count {status['ring_buffer_count']} < required {min_ring_buffer_count}"
+                    )
+            if max_frame_staleness is not None:
+                stale_for = status["stale_for"]
+                if stale_for is None:
+                    issues.append(f"{prefix}: no frame has been received yet")
+                elif stale_for > max_frame_staleness:
+                    issues.append(
+                        f"{prefix}: latest frame is stale for {stale_for:.3f}s > {max_frame_staleness:.3f}s"
+                    )
+        return health, issues
+
+    def assert_camera_healthy(
+        self, min_ring_buffer_count=None, max_frame_staleness=None
+    ):
+        health, issues = self.get_camera_health_issues(
+            min_ring_buffer_count=min_ring_buffer_count,
+            max_frame_staleness=max_frame_staleness,
+        )
+        if issues:
+            raise RuntimeError("Camera health check failed: " + "; ".join(issues))
+        return health
 
     # ========= async env API ===========
     def get_obs(self) -> dict:
@@ -480,6 +558,10 @@ class Arx5Env:
     def get_robot_state(self):
         return [robot.get_state() for robot in self.robots]
 
+    def set_gripper_control_phase(self, phase: GripperControlPhase):
+        for robot in self.robots:
+            robot.set_gripper_control_phase(phase)
+
     # recording API
     def start_episode(self, start_time=None):
         "Start recording and return first obs"
@@ -500,7 +582,10 @@ class Arx5Env:
 
         # start recording on camera
         self.camera.restart_put(start_time=start_time)
-        self.camera.start_recording(video_path=video_paths, start_time=start_time)
+        if self.enable_video_recording:
+            self.camera.start_recording(video_path=video_paths, start_time=start_time)
+        else:
+            print("[Arx5Env] Video recording disabled; policy camera frames remain available in shared memory only.")
 
         # create accumulators
         self.obs_accumulator = ObsAccumulator()
@@ -511,15 +596,23 @@ class Arx5Env:
 
     def end_episode(self):
         "Stop recording"
-        assert self.is_ready
 
         # stop video recorder
-        self.camera.stop_recording()
+        if self.enable_video_recording:
+            try:
+                self.camera.stop_recording()
+            except Exception as e:
+                print(f"[Arx5Env] Failed to stop camera recording cleanly: {e}")
 
         # TODO
         if self.obs_accumulator is not None:
             # recording
             assert self.action_accumulator is not None
+            if len(self.action_accumulator) == 0:
+                self.obs_accumulator = None
+                self.action_accumulator = None
+                print("[Arx5Env] Episode ended before any action was recorded; skipping save.")
+                return
 
             # Since the only way to accumulate obs and action is by calling
             # get_obs and exec_actions, which will be in the same thread.

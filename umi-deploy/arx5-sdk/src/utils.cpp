@@ -2,9 +2,41 @@
 #include "utils.h"
 #include <cstdarg>
 #include <cstdio>
+#include <dlfcn.h>
 
 namespace arx
 {
+
+// Returns the directory containing this .so at runtime
+std::string get_root_dir()
+{
+    // Local install file structure:
+    // arx5-sdk/python/arx5_interface.so
+    // arx5-sdk/models/xxx.urdf
+
+    // pip install file structure:
+    // arx5_interface/python/arx5_interface.so
+    // arx5_interface/models/xxx.urdf
+
+    Dl_info dl_info;
+    if (dladdr((void *)&get_root_dir, &dl_info) && dl_info.dli_fname)
+    {
+        std::string path(dl_info.dli_fname);
+        printf("Found dynamic library path: %s\n", path.c_str());
+        size_t last_slash = path.rfind('/');
+        if (last_slash != std::string::npos)
+        {
+            path = path.substr(0, last_slash);
+            size_t last_slash2 = path.rfind('/');
+            if (last_slash2 != std::string::npos)
+            {
+                return path.substr(0, last_slash2);
+            }
+        }
+    }
+    printf("Failed to get pybind library directory\n. Falling back to SDK_ROOT: %s\n", std::string(SDK_ROOT).c_str());
+    return std::string(SDK_ROOT);
+}
 
 MovingAverageXd::MovingAverageXd(int dof, int window_size)
 {

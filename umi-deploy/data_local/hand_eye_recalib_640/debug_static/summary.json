@@ -1,0 +1,437 @@
+{
+  "input_pkl": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/hand_eye_static_test.pkl",
+  "hand_eye_json": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/robot_world_hand_eye_cam0_tag145.json",
+  "intr_json": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/calibration/cam0_sensor_intrinsics.json",
+  "aruco_yaml": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_tags/aruco_config_tag12_145mm.yaml",
+  "tag_id": 12,
+  "samples_total": 10,
+  "samples_used": 10,
+  "aruco_reprojection": {
+    "fisheye_raw_all_corners_px": {
+      "mean": 2.439179641892953,
+      "median": 2.607931144298809,
+      "rms": 2.6133332474830286,
+      "max": 3.6956139301581326
+    },
+    "undistorted_fit_space_all_corners_px": {
+      "mean": 2.6625809192849794,
+      "median": 2.8219740738668326,
+      "rms": 2.8800335227313734,
+      "max": 4.153357151499411
+    },
+    "per_frame_fisheye_raw_px": [
+      {
+        "sample": 0,
+        "mean": 2.498342540648335,
+        "max": 3.4858762215141113
+      },
+      {
+        "sample": 1,
+        "mean": 2.540375263626948,
+        "max": 3.578979554500084
+      },
+      {
+        "sample": 2,
+        "mean": 2.5808012182772933,
+        "max": 3.686309668365619
+      },
+      {
+        "sample": 3,
+        "mean": 2.5828689614258566,
+        "max": 3.6956139301581326
+      },
+      {
+        "sample": 4,
+        "mean": 2.5229971622644944,
+        "max": 3.57205025325007
+      },
+      {
+        "sample": 5,
+        "mean": 2.268760795798316,
+        "max": 3.184872877931019
+      },
+      {
+        "sample": 6,
+        "mean": 2.2138144714555916,
+        "max": 3.1014793113756673
+      },
+      {
+        "sample": 7,
+        "mean": 2.2336251165367513,
+        "max": 3.140971698152232
+      },
+      {
+        "sample": 8,
+        "mean": 2.5261803350265293,
+        "max": 3.4424116456299694
+      },
+      {
+        "sample": 9,
+        "mean": 2.4240305538694162,
+        "max": 3.3129984518903495
+      }
+    ]
+  },
+  "convention_results": [
+    {
+      "combo_id": 0,
+      "tcp_pose_as": "T_base_tcp",
+      "tx_gripper2camera_as": "T_camera_tcp",
+      "tx_base2world_as": "T_world_base",
+      "translation_mm": {
+        "mean": 24.332933437476772,
+        "median": 24.3557510375403,
+        "rms": 24.33436026791428,
+        "max": 24.813953800602995
+      },
+      "rotation_deg": {
+        "mean": 7.210191346059228,
+        "median": 7.216430180794683,
+        "rms": 7.211510489806256,
+        "max": 7.378129376799399
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 8,
+          "trans_mm": 24.813953800602995,
+          "rot_deg": 7.378129376799399
+        },
+        {
+          "sample": 2,
+          "trans_mm": 24.58802485007728,
+          "rot_deg": 7.338838421468653
+        },
+        {
+          "sample": 3,
+          "trans_mm": 24.45509295067791,
+          "rot_deg": 7.234171465265289
+        },
+        {
+          "sample": 0,
+          "trans_mm": 24.442062770644814,
+          "rot_deg": 7.371440055759091
+        },
+        {
+          "sample": 1,
+          "trans_mm": 24.390519169460056,
+          "rot_deg": 7.3001848030171015
+        }
+      ]
+    },
+    {
+      "combo_id": 1,
+      "tcp_pose_as": "T_base_tcp",
+      "tx_gripper2camera_as": "T_camera_tcp",
+      "tx_base2world_as": "T_base_world",
+      "translation_mm": {
+        "mean": 510.9957203326163,
+        "median": 510.9017162276521,
+        "rms": 510.99642872494604,
+        "max": 512.1655602763113
+      },
+      "rotation_deg": {
+        "mean": 178.00016731364786,
+        "median": 178.0047294430146,
+        "rms": 178.00017757176494,
+        "max": 178.10423716527742
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 2,
+          "trans_mm": 512.1655602763113,
+          "rot_deg": 178.02744271427778
+        },
+        {
+          "sample": 3,
+          "trans_mm": 511.9831146493336,
+          "rot_deg": 178.01254418595107
+        },
+        {
+          "sample": 0,
+          "trans_mm": 511.796045864553,
+          "rot_deg": 178.10423716527742
+        },
+        {
+          "sample": 1,
+          "trans_mm": 511.7401442410362,
+          "rot_deg": 178.07395593325543
+        },
+        {
+          "sample": 4,
+          "trans_mm": 511.38064414129445,
+          "rot_deg": 178.03533005287358
+        }
+      ]
+    },
+    {
+      "combo_id": 2,
+      "tcp_pose_as": "T_base_tcp",
+      "tx_gripper2camera_as": "T_tcp_camera",
+      "tx_base2world_as": "T_world_base",
+      "translation_mm": {
+        "mean": 189.699029738011,
+        "median": 189.69166962055462,
+        "rms": 189.70004151529417,
+        "max": 190.7037214682492
+      },
+      "rotation_deg": {
+        "mean": 37.644373403381806,
+        "median": 37.61423799208569,
+        "rms": 37.64463282754113,
+        "max": 37.99544072488369
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 6,
+          "trans_mm": 190.7037214682492,
+          "rot_deg": 37.49363379536081
+        },
+        {
+          "sample": 7,
+          "trans_mm": 190.69123119625885,
+          "rot_deg": 37.50825885580068
+        },
+        {
+          "sample": 5,
+          "trans_mm": 189.89924587182048,
+          "rot_deg": 37.63277124032525
+        },
+        {
+          "sample": 4,
+          "trans_mm": 189.8328605510122,
+          "rot_deg": 37.5427179247253
+        },
+        {
+          "sample": 9,
+          "trans_mm": 189.8261287826186,
+          "rot_deg": 37.750360001672355
+        }
+      ]
+    },
+    {
+      "combo_id": 3,
+      "tcp_pose_as": "T_base_tcp",
+      "tx_gripper2camera_as": "T_tcp_camera",
+      "tx_base2world_as": "T_base_world",
+      "translation_mm": {
+        "mean": 455.3086556655221,
+        "median": 455.2132595574354,
+        "rms": 455.30873521431954,
+        "max": 455.8672063786274
+      },
+      "rotation_deg": {
+        "mean": 175.78426994534695,
+        "median": 175.77780880415736,
+        "rms": 175.78431754903463,
+        "max": 175.95268043916175
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 9,
+          "trans_mm": 455.8672063786274,
+          "rot_deg": 175.7015518930651
+        },
+        {
+          "sample": 3,
+          "trans_mm": 455.6586193614365,
+          "rot_deg": 175.85406571524965
+        },
+        {
+          "sample": 8,
+          "trans_mm": 455.54248546970064,
+          "rot_deg": 175.58898675567445
+        },
+        {
+          "sample": 1,
+          "trans_mm": 455.261222142185,
+          "rot_deg": 175.9206624766154
+        },
+        {
+          "sample": 0,
+          "trans_mm": 455.2480374834389,
+          "rot_deg": 175.95268043916175
+        }
+      ]
+    },
+    {
+      "combo_id": 4,
+      "tcp_pose_as": "T_tcp_base",
+      "tx_gripper2camera_as": "T_camera_tcp",
+      "tx_base2world_as": "T_world_base",
+      "translation_mm": {
+        "mean": 236.85076879900421,
+        "median": 236.9416461263873,
+        "rms": 236.85105540895464,
+        "max": 237.22018648273811
+      },
+      "rotation_deg": {
+        "mean": 49.492073496715705,
+        "median": 49.41109367811485,
+        "rms": 49.49254692772587,
+        "max": 49.843473778606516
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 5,
+          "trans_mm": 237.22018648273811,
+          "rot_deg": 49.736936191574884
+        },
+        {
+          "sample": 0,
+          "trans_mm": 237.17129151868215,
+          "rot_deg": 49.33584058800176
+        },
+        {
+          "sample": 7,
+          "trans_mm": 237.10604312581177,
+          "rot_deg": 49.831750354971206
+        },
+        {
+          "sample": 6,
+          "trans_mm": 237.10314209638952,
+          "rot_deg": 49.843473778606516
+        },
+        {
+          "sample": 1,
+          "trans_mm": 236.97490006403936,
+          "rot_deg": 49.38453023951977
+        }
+      ]
+    },
+    {
+      "combo_id": 5,
+      "tcp_pose_as": "T_tcp_base",
+      "tx_gripper2camera_as": "T_camera_tcp",
+      "tx_base2world_as": "T_base_world",
+      "translation_mm": {
+        "mean": 318.08565291780013,
+        "median": 318.0540723926118,
+        "rms": 318.08711352755483,
+        "max": 319.6041264759008
+      },
+      "rotation_deg": {
+        "mean": 174.9423593152139,
+        "median": 174.90919911708914,
+        "rms": 174.94241531980413,
+        "max": 175.21237204998084
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 2,
+          "trans_mm": 319.6041264759008,
+          "rot_deg": 174.75841643441444
+        },
+        {
+          "sample": 3,
+          "trans_mm": 319.26860414034724,
+          "rot_deg": 174.82866196783573
+        },
+        {
+          "sample": 0,
+          "trans_mm": 318.8025096087059,
+          "rot_deg": 174.94122241660324
+        },
+        {
+          "sample": 1,
+          "trans_mm": 318.7794387949635,
+          "rot_deg": 174.89214239866487
+        },
+        {
+          "sample": 4,
+          "trans_mm": 318.53297192505926,
+          "rot_deg": 174.8363074079882
+        }
+      ]
+    },
+    {
+      "combo_id": 6,
+      "tcp_pose_as": "T_tcp_base",
+      "tx_gripper2camera_as": "T_tcp_camera",
+      "tx_base2world_as": "T_world_base",
+      "translation_mm": {
+        "mean": 426.5559430324377,
+        "median": 426.64095874774955,
+        "rms": 426.55711986760707,
+        "max": 427.82792550321506
+      },
+      "rotation_deg": {
+        "mean": 40.976903880790225,
+        "median": 40.95524527479341,
+        "rms": 40.97757776955233,
+        "max": 41.26140354055109
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 6,
+          "trans_mm": 427.82792550321506,
+          "rot_deg": 41.26140354055109
+        },
+        {
+          "sample": 7,
+          "trans_mm": 427.80830147105445,
+          "rot_deg": 41.26029875164464
+        },
+        {
+          "sample": 5,
+          "trans_mm": 427.1725502326273,
+          "rot_deg": 41.22633705788457
+        },
+        {
+          "sample": 4,
+          "trans_mm": 426.9800226157748,
+          "rot_deg": 40.81850958995623
+        },
+        {
+          "sample": 1,
+          "trans_mm": 426.65502541220667,
+          "rot_deg": 40.80025442077986
+        }
+      ]
+    },
+    {
+      "combo_id": 7,
+      "tcp_pose_as": "T_tcp_base",
+      "tx_gripper2camera_as": "T_tcp_camera",
+      "tx_base2world_as": "T_base_world",
+      "translation_mm": {
+        "mean": 378.5498046265546,
+        "median": 378.6648091628115,
+        "rms": 378.5511359535466,
+        "max": 379.9747285943658
+      },
+      "rotation_deg": {
+        "mean": 175.78070601285404,
+        "median": 175.81575447431032,
+        "rms": 175.78072071930038,
+        "max": 175.8767171819403
+      },
+      "worst_samples_by_translation": [
+        {
+          "sample": 8,
+          "trans_mm": 379.9747285943658,
+          "rot_deg": 175.67808374781683
+        },
+        {
+          "sample": 9,
+          "trans_mm": 379.8573127126838,
+          "rot_deg": 175.6784649106438
+        },
+        {
+          "sample": 7,
+          "trans_mm": 379.2524931376738,
+          "rot_deg": 175.86269977834857
+        },
+        {
+          "sample": 6,
+          "trans_mm": 379.2054338455097,
+          "rot_deg": 175.8767171819403
+        },
+        {
+          "sample": 5,
+          "trans_mm": 379.13861340572925,
+          "rot_deg": 175.82020755287633
+        }
+      ]
+    }
+  ]
+}

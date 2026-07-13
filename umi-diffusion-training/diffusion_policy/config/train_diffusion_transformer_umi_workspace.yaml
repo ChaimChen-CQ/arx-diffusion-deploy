@@ -1,12 +1,49 @@
 defaults:
   - _self_
-  - task: umi
 
 name: train_diffusion_transformer_timm
 _target_: diffusion_policy.workspace.train_diffusion_transformer_timm_workspace.TrainDiffusionTransformerTimmWorkspace
 
-task_name: ${task.name}
-shape_meta: ${task.shape_meta}
+# --- [手动补全：Task 核心参数定义] ---
+task:
+  name: umi
+  # --- [新增：位姿表征定义] ---
+  pose_repr:
+    obs_pose_repr: relative
+    action_pose_repr: relative
+  # --- [新增：在这里添加 dataset 定义] ---
+  dataset:
+    dataset_path: "data/umi_dataset"
+  shape_meta: &shape_meta
+    obs:
+      camera0_rgb:
+        shape: [3, 224, 224]
+        type: rgb
+        horizon: 2
+      robot0_eef_pos:
+        shape: [3]
+        type: low_dim
+        horizon: 2
+      # --- [修正：改为 6 维 Rotation 6D 表示] ---
+      robot0_eef_rot_axis_angle:
+        shape: [6]
+        type: low_dim
+        horizon: 2
+      robot0_gripper_width:
+        shape: [1]
+        type: low_dim
+        horizon: 2
+      # --- [修正：改为 6 维 Rotation 6D 表示] ---
+      robot0_eef_rot_axis_angle_wrt_start:
+        shape: [6]
+        type: low_dim
+        horizon: 2
+    action:
+      shape: [10]
+      horizon: 16
+
+task_name: umi
+shape_meta: *shape_meta
 exp_name: "default"
 
 n_action_steps: 8
@@ -15,88 +52,51 @@ n_emb: 768
 policy:
   _target_: diffusion_policy.policy.diffusion_transformer_timm_policy.DiffusionTransformerTimmPolicy
 
-  shape_meta: ${shape_meta}
+  shape_meta: *shape_meta
   
   noise_scheduler:
     _target_: diffusers.DDIMScheduler
     num_train_timesteps: 50
     beta_start: 0.0001
     beta_end: 0.02
-    # beta_schedule is important
-    # this is the best we found
     beta_schedule: squaredcos_cap_v2
     clip_sample: True
     set_alpha_to_one: True
     steps_offset: 0
-    prediction_type: epsilon # or sample
+    prediction_type: epsilon
 
   obs_encoder:
     _target_: diffusion_policy.model.vision.transformer_obs_encoder.TransformerObsEncoder
-    shape_meta: ${shape_meta}
+    shape_meta: *shape_meta
     global_pool: ''
-    n_emb: ${n_emb}
-
-    ##### from scratch #####
-    # model_name: 'vit_base_patch16_224'
-    # model_name: 'resnet34'
-    # model_name: 'vit_tiny_patch16_224'
-    # model_name: 'efficientnet_b0'
-    # model_name: 'efficientnet_b3'
-    # pretrained: False
-    # frozen: False
-
-    ##### from scratch #####
-    # model_name: 'resnet34.a1_in1k'
+    n_emb: 768
+    # --- [修复：删除所有重复和注释的 model_name，只保留这一个] ---
     model_name: 'vit_base_patch16_clip_224.openai'
-    # model_name: 'convnext_base.clip_laion2b_augreg_ft_in12k'
     pretrained: True
     frozen: False
-
-    # 'cls' or 'avg' or 'max' or 'soft_attention' or 'spatial_embedding' or 'transformer' or 'attention_pool_2d'
     feature_aggregation: null
-
-    # it only works for resnet. 32 (7x7) or 16 (14x14)
     downsample_ratio: 32
+    use_group_norm: True
+    share_rgb_model: False
 
     transforms:
       - type: RandomCrop
         ratio: 0.95
       - _target_: torchvision.transforms.RandomRotation
-        degrees:
-          - -5.0
-          - 5.0
+        degrees: [-5.0, 5.0]
         expand: false
       - _target_: torchvision.transforms.ColorJitter
         brightness: 0.3
         contrast: 0.4
         saturation: 0.5
         hue: 0.08
-      # - _target_: torchvision.transforms.RandomPerspective
-      #   distortion_scale: 0.5
-      #   p: 1.0
-      # - _target_: torchvision.transforms.ElasticTransform
-      #   alpha: 50.0
-      #   sigma: 5.0
-      # - _target_: torchvision.transforms.RandomPerspective
-      #   distortion_scale: 0.5
-      #   p: 1.0
-      # - _target_: torchvision.transforms.ElasticTransform
-      #   alpha: 50.0
-      #   sigma: 5.0
-      # - _target_: torchvision.transforms.RandomCrop
-      #   size: 192
-      
-
-    use_group_norm: True
-    share_rgb_model: False
 
   num_inference_steps: 16
-  input_pertub: 0.1 # reference: https://github.com/forever208/DDPM-IP
+  input_pertub: 0.1
   n_layer: 7
   n_head: 8
-  n_emb: ${n_emb}
+  n_emb: 768
   p_drop_attn: 0.1
-  
 
 ema:
   _target_: diffusion_policy.model.diffusion.ema_model.EMAModel

@@ -29,19 +29,84 @@ Arx5CartesianController::Arx5CartesianController(std::string model, std::string 
 void Arx5CartesianController::set_eef_cmd(EEFState new_cmd)
 {
     JointState current_joint_state = get_joint_state();
+    JointState current_joint_cmd = get_joint_cmd();
+    if (current_joint_cmd.pos.size() == robot_config_.joint_dof)
+    {
+        Pose6d current_cmd_pose = solver_->forward_kinematics(current_joint_cmd.pos);
+        if ((new_cmd.pose_6d - current_cmd_pose).norm() < 1e-8 &&
+            std::abs(new_cmd.gripper_pos - current_joint_cmd.gripper_pos) < 1e-8)
+        {
+            return;
+        }
+    }
 
-    // The following line only works under c++17
-    // auto [success, target_joint_pos] = solver_->inverse_kinematics(new_cmd.pose_6d, current_joint_state.pos);
+    VecDoF ik_seed = current_joint_cmd.pos;
 
-    std::tuple<int, VecDoF> ik_results;
-    ik_results = multi_trial_ik(new_cmd.pose_6d, joint_state_.pos);
-    int ik_status = std::get<0>(ik_results);
+    if (ik_seed.size() != robot_config_.joint_dof)
+    {
+        logger_->warn("Joint command size is {}, falling back to joint state size {}", ik_seed.size(),
+                      current_joint_state.pos.size());
+        ik_seed = current_joint_state.pos;
+    }
+    if (ik_seed.size() != robot_config_.joint_dof)
+    {
+        logger_->warn("IK seed size is {}, falling back to zero seed", ik_seed.size());
+        ik_seed = VecDoF::Zero(robot_config_.joint_dof);
+    }
+
+    VecDoF target_joint_pos = ik_seed;
+    int ik_status = 0;
+    const double eps = 1e-4;
+    const double damping = 1e-4;
+    const double max_step = 0.08;
+    const int max_iter = 30;
+    double final_err_norm = 0.0;
+
+    for (int iter = 0; iter < max_iter; iter++)
+    {
+        Pose6d current_pose = solver_->forward_kinematics(target_joint_pos);
+        Pose6d err = new_cmd.pose_6d - current_pose;
+        final_err_norm = err.norm();
+        if (err.head<3>().norm() < 5e-4 && err.tail<3>().norm() < 5e-3)
+        {
+            break;
+        }
+
+        Eigen::MatrixXd jacobian(6, robot_config_.joint_dof);
+        for (int j = 0; j < robot_config_.joint_dof; j++)
+        {
+            VecDoF q_plus = target_joint_pos;
+            q_plus[j] += eps;
+            jacobian.col(j) = (solver_->forward_kinematics(q_plus) - current_pose) / eps;
+        }
+
+        Eigen::MatrixXd lhs = jacobian * jacobian.transpose() + damping * Eigen::MatrixXd::Identity(6, 6);
+        VecDoF delta = jacobian.transpose() * lhs.ldlt().solve(err);
+        double delta_norm = delta.norm();
+        if (delta_norm > max_step)
+        {
+            delta *= max_step / delta_norm;
+        }
+
+        target_joint_pos += delta;
+        for (int j = 0; j < robot_config_.joint_dof; j++)
+        {
+            target_joint_pos[j] =
+                std::max(robot_config_.joint_pos_min[j], std::min(robot_config_.joint_pos_max[j], target_joint_pos[j]));
+        }
+    }
+
+    if (final_err_norm > 2e-2)
+    {
+        ik_status = -1;
+        logger_->warn("Numerical IK residual is {:.6f}", final_err_norm);
+    }
 
     if (new_cmd.timestamp == 0)
         new_cmd.timestamp = get_timestamp() + controller_config_.default_preview_time;
 
     JointState target_joint_state{robot_config_.joint_dof};
-    target_joint_state.pos = std::get<1>(ik_results);
+    target_joint_state.pos = target_joint_pos;
     target_joint_state.gripper_pos = new_cmd.gripper_pos;
     target_joint_state.gripper_vel = new_cmd.gripper_vel;
     target_joint_state.gripper_torque = new_cmd.gripper_torque;
@@ -52,10 +117,7 @@ void Arx5CartesianController::set_eef_cmd(EEFState new_cmd)
     std::lock_guard<std::mutex> guard(cmd_mutex_);
     interpolator_.override_waypoint(get_timestamp(), target_joint_state);
 
-    if (ik_status != 0)
-    {
-        logger_->warn("Inverse kinematics failed: {} ({})", solver_->get_ik_status_name(ik_status), ik_status);
-    }
+    (void)ik_status;
 }
 
 void Arx5CartesianController::set_eef_traj(std::vector<EEFState> new_traj)
@@ -117,7 +179,13 @@ EEFState Arx5CartesianController::get_eef_cmd()
 {
     JointState joint_cmd = get_joint_cmd();
     EEFState eef_cmd;
-    eef_cmd.pose_6d = solver_->forward_kinematics(joint_cmd.pos);
+    VecDoF fk_joint_pos = joint_cmd.pos;
+    if (fk_joint_pos.size() != robot_config_.joint_dof)
+    {
+        logger_->warn("Joint command size is {}, falling back to zero seed", fk_joint_pos.size());
+        fk_joint_pos = VecDoF::Zero(robot_config_.joint_dof);
+    }
+    eef_cmd.pose_6d = solver_->forward_kinematics(fk_joint_pos);
     eef_cmd.gripper_pos = joint_cmd.gripper_pos;
     eef_cmd.gripper_vel = joint_cmd.gripper_vel;
     eef_cmd.gripper_torque = joint_cmd.gripper_torque;
@@ -132,32 +200,45 @@ std::tuple<int, Eigen::VectorXd> Arx5CartesianController::multi_trial_ik(Eigen::
     if (additional_trial_num < 0)
         throw std::invalid_argument("Number of additional trials must be non-negative");
     // Solve IK with at least 2 init joint positions: current joint position and home joint position
-    if (current_joint_pos.size() != robot_config_.joint_dof || target_pose_6d.size() != 6)
+    if (target_pose_6d.size() != 6)
         throw std::invalid_argument(
             "Inverse kinematics input expected size 6, " + std::to_string(robot_config_.joint_dof) + " but got " +
             std::to_string(target_pose_6d.size()) + ", " + std::to_string(current_joint_pos.size()));
-    Eigen::MatrixXd init_joint_positions = Eigen::MatrixXd::Zero(additional_trial_num + 2, robot_config_.joint_dof);
-    init_joint_positions.row(0) = current_joint_pos;
-    init_joint_positions.row(1) = Eigen::VectorXd::Zero(robot_config_.joint_dof);
+
+    VecDoF seed = VecDoF::Zero(robot_config_.joint_dof);
+    if (current_joint_pos.size() != robot_config_.joint_dof)
+    {
+        logger_->warn("IK seed size is {}, expected {}. Padding/truncating seed.", current_joint_pos.size(),
+                      robot_config_.joint_dof);
+    }
+    int copy_size = std::min<int>(current_joint_pos.size(), robot_config_.joint_dof);
+    if (copy_size > 0)
+    {
+        seed.head(copy_size) = current_joint_pos.head(copy_size);
+    }
+
+    std::vector<VecDoF> init_joint_positions(additional_trial_num + 2, VecDoF::Zero(robot_config_.joint_dof));
+    init_joint_positions[0] = seed;
+    init_joint_positions[1] = VecDoF::Zero(robot_config_.joint_dof);
     for (int i = 0; i < additional_trial_num; i++)
     {
-        init_joint_positions.row(i + 2) = Eigen::VectorXd::Random(robot_config_.joint_dof);
+        init_joint_positions[i + 2] = Eigen::VectorXd::Random(robot_config_.joint_dof);
         // Map the random values into the joint limits
         for (int j = 0; j < robot_config_.joint_dof; j++)
         {
-            init_joint_positions(i + 2, j) =
-                robot_config_.joint_pos_min[j] + (init_joint_positions(i + 2, j) + 1) / 2 *
+            init_joint_positions[i + 2][j] =
+                robot_config_.joint_pos_min[j] + (init_joint_positions[i + 2][j] + 1) / 2 *
                                                      (robot_config_.joint_pos_max[j] - robot_config_.joint_pos_min[j]);
         }
     }
-    Eigen::MatrixXd target_joint_positions = Eigen::MatrixXd::Zero(additional_trial_num + 2, robot_config_.joint_dof);
+    std::vector<VecDoF> target_joint_positions(additional_trial_num + 2, VecDoF::Zero(robot_config_.joint_dof));
     std::vector<int> all_ik_status(additional_trial_num + 2, 0);
     std::vector<double> distances(additional_trial_num + 2, 100000); // L2 distances, initialize to infinity
 
     for (int i = 0; i < additional_trial_num + 2; i++)
     {
         std::tuple<int, Eigen::VectorXd> result;
-        result = solver_->inverse_kinematics(target_pose_6d, init_joint_positions.row(i));
+        result = solver_->inverse_kinematics(target_pose_6d, init_joint_positions[i]);
         int ik_status = std::get<0>(result);
         Eigen::VectorXd target_joint_pos = std::get<1>(result);
         bool in_joint_limit = ((robot_config_.joint_pos_max - target_joint_pos).array() > 0).all() &&
@@ -168,13 +249,13 @@ std::tuple<int, Eigen::VectorXd> Arx5CartesianController::multi_trial_ik(Eigen::
         }
         all_ik_status[i] = ik_status;
         // Check whether the target joint position is within the joint limits
-        distances[i] = (target_joint_pos - current_joint_pos).norm();
-        target_joint_positions.row(i) = target_joint_pos;
+        distances[i] = (target_joint_pos - seed).norm();
+        target_joint_positions[i] = target_joint_pos;
     }
     bool final_success = std::any_of(all_ik_status.begin(), all_ik_status.end(), [](bool success) { return success; });
     int min_idx = std::distance(distances.begin(), std::min_element(distances.begin(), distances.end()));
     int min_ik_status = all_ik_status[min_idx];
-    Eigen::VectorXd min_target_joint_pos = target_joint_positions.row(min_idx);
+    Eigen::VectorXd min_target_joint_pos = target_joint_positions[min_idx];
     // clip the target joint position to the joint limits
     for (int i = 0; i < robot_config_.joint_dof; i++)
     {

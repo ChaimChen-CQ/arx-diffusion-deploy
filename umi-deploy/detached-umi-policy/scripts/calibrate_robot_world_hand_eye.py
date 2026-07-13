@@ -1,6 +1,6 @@
 """
 Example:
-python scripts/calibrate_robot_world_hand_eye.py -i data/calibration/hand_eye_calib.pkl -o data/calibration/robot_world_hand_eye.json --intr_json data/calibration/gopro_intrinsics_1080p.json --aruco_yaml data/calibration/aruco_config.yaml --tag_id 12
+python scripts/calibrate_robot_world_hand_eye.py -i data/calibration/hand_eye_calib.pkl -o data/calibration/robot_world_hand_eye.json --intr_json data/calibration/gripper_fisheye_intrinsics.json --aruco_yaml data/calibration/aruco_config.yaml --tag_id 12
 """
 
 # %%
@@ -18,6 +18,7 @@ import json
 import yaml
 import numpy as np
 import cv2
+from scipy.spatial.transform import Rotation as R
 
 from umi.common.cv_util import (
     parse_fisheye_intrinsics, 
@@ -30,6 +31,19 @@ from umi.common.pose_util import (
     pose_to_mat, mat_to_pose
 )
 
+
+def pose6_to_mat(pose, rotation_repr):
+    pose = np.asarray(pose, dtype=np.float64).reshape(6)
+    if rotation_repr == "rotvec":
+        return pose_to_mat(pose)
+    if rotation_repr == "euler_xyz":
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, 3] = pose[:3]
+        tx[:3, :3] = R.from_euler("xyz", pose[3:]).as_matrix()
+        return tx
+    raise ValueError(f"Unsupported rotation_repr: {rotation_repr}")
+
+
 # %%
 @click.command()
 @click.option('-i', '--input', type=str, help="Load pickle file output of record_robo_world_hand_eye.py")
@@ -37,7 +51,15 @@ from umi.common.pose_util import (
 @click.option('-ij', '--intr_json', type=str, help="Fisheye intrinsics file")
 @click.option('-ay', '--aruco_yaml', type=str, help="Aruco config file")
 @click.option('-t', '--tag_id', type=int, help="ArUcO tag id")
-def main(input, output, intr_json, aruco_yaml, tag_id):
+@click.option("--pose_key", default="tcp_pose", show_default=True, help="Robot pose key in the pickle, e.g. tcp_pose or ee_pose.")
+@click.option(
+    "--pose_rotation_repr",
+    type=click.Choice(["rotvec", "euler_xyz"]),
+    default="rotvec",
+    show_default=True,
+    help="Rotation representation used by pose_key. ARX SDK ee_pose is euler_xyz.",
+)
+def main(input, output, intr_json, aruco_yaml, tag_id, pose_key, pose_rotation_repr):
     # load data
     img_eef_data = pickle.load(open(input, 'rb'))
     assert len(img_eef_data) >= 3
@@ -50,8 +72,7 @@ def main(input, output, intr_json, aruco_yaml, tag_id):
     # load intrinsics
     raw_fisheye_intr = parse_fisheye_intrinsics(json.load(open(intr_json, 'r')))
 
-    # convert intrinsics to actual image resolution
-    # NOOP most of the time
+    # Validate that intrinsics match the actual image resolution.
     example_img = img_eef_data[0]['img']
     res = example_img.shape[:2][::-1]
     fisheye_intr = convert_fisheye_intrinsics_resolution(
@@ -62,9 +83,14 @@ def main(input, output, intr_json, aruco_yaml, tag_id):
     t_world2cam = list()
     R_base2gripper = list()
     t_base2gripper = list()
-    for this_data in img_eef_data:
+    for sample_idx, this_data in enumerate(img_eef_data):
         img = this_data['img']
-        tcp_pose = this_data['tcp_pose']
+        if pose_key not in this_data:
+            raise KeyError(
+                f"Sample {sample_idx} does not contain pose_key={pose_key!r}. "
+                f"Available keys: {list(this_data.keys())}"
+            )
+        robot_pose = this_data[pose_key]
         draw_predefined_mask(img, color=(0,0,0), mirror=True, gripper=False, finger=False)
 
         tag_dict = detect_localize_aruco_tags(
@@ -78,7 +104,7 @@ def main(input, output, intr_json, aruco_yaml, tag_id):
             R_world2cam.append(tag_data['rvec'])
             t_world2cam.append(tag_data['tvec'])
 
-            tx_base_grip = pose_to_mat(tcp_pose)
+            tx_base_grip = pose6_to_mat(robot_pose, pose_rotation_repr)
             tx_grip_base = np.linalg.inv(tx_base_grip)
             tv_grip_base = mat_to_pose(tx_grip_base)
             R_base2gripper.append(tv_grip_base[3:])
@@ -103,7 +129,9 @@ def main(input, output, intr_json, aruco_yaml, tag_id):
 
     result = {
         'tx_base2world': tx_base2world.tolist(),
-        'tx_gripper2camera': tx_gripper2camera.tolist()
+        'tx_gripper2camera': tx_gripper2camera.tolist(),
+        'pose_key': pose_key,
+        'pose_rotation_repr': pose_rotation_repr,
     }
 
     print(f'Writing calibration result to {output}')
@@ -112,4 +140,3 @@ def main(input, output, intr_json, aruco_yaml, tag_id):
 # %%
 if __name__ == '__main__':
     main()
-

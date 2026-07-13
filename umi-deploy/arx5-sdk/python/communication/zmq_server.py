@@ -35,7 +35,14 @@ class Arx5Server:
     ):
         self.model = model
         self.interface = interface
-        self.arx5_cartesian_controller = arx5.Arx5CartesianController(model, interface)
+        robot_config = arx5.RobotConfigFactory.get_instance().get_config(model)
+        controller_config = arx5.ControllerConfigFactory.get_instance().get_config(
+            "cartesian_controller", robot_config.joint_dof
+        )
+        controller_config.gravity_compensation = False
+        self.arx5_cartesian_controller = arx5.Arx5CartesianController(
+            robot_config, controller_config, interface
+        )
         print(f"Arx5Server is initialized with {model} on {interface}")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
@@ -56,10 +63,20 @@ class Arx5Server:
                 socks = dict(self.poller.poll(int(self.no_cmd_timeout * 1000)))
                 if self.socket in socks and socks[self.socket] == zmq.POLLIN:
                     msg: dict[str, Any] = self.socket.recv_pyobj()
+                    print(f"Received message: {msg}", flush=True)
                     if self.arx5_cartesian_controller is None:
-                        print(f"Reestablishing high level controller")
+                        print(f"Reestablishing high level controller", flush=True)
+                        robot_config = arx5.RobotConfigFactory.get_instance().get_config(
+                            self.model
+                        )
+                        controller_config = (
+                            arx5.ControllerConfigFactory.get_instance().get_config(
+                                "cartesian_controller", robot_config.joint_dof
+                            )
+                        )
+                        controller_config.gravity_compensation = False
                         self.arx5_cartesian_controller = arx5.Arx5CartesianController(
-                            self.model, self.interface
+                            robot_config, controller_config, self.interface
                         )
                 else:
 
@@ -81,7 +98,7 @@ class Arx5Server:
                 continue
             try:
                 if not isinstance(msg, dict):
-                    print(f"Error: Received invalid Message {msg}, ignored")
+                    print(f"Error: Received invalid Message {msg}, ignored", flush=True)
                     self.socket.send_pyobj(
                         {
                             "cmd": "UNKNOWN",
@@ -89,14 +106,20 @@ class Arx5Server:
                         }
                     )
                     continue
-                if msg["cmd"] == "GET_STATE":
-                    # print(f"Received GET_STATE message")
+                if msg["cmd"] == "PING":
+                    self.socket.send_pyobj({"cmd": "PING", "data": "OK"})
+                    print("Replied PING", flush=True)
+                elif msg["cmd"] == "GET_STATE":
+                    print("Handling GET_STATE", flush=True)
                     eef_pose_cmd = self.arx5_cartesian_controller.get_eef_cmd()
+                    print("GET_STATE get_eef_cmd done", flush=True)
                     eef_state = self.arx5_cartesian_controller.get_eef_state()
+                    print("GET_STATE get_eef_state done", flush=True)
 
-                    print(f"{eef_pose_cmd}")
-                    print(f"{eef_state.pose_6d()}")
+                    print(f"{eef_pose_cmd}", flush=True)
+                    print(f"{eef_state.pose_6d()}", flush=True)
                     low_state = self.arx5_cartesian_controller.get_joint_state()
+                    print("GET_STATE get_joint_state done", flush=True)
                     reply_msg = {
                         "cmd": "GET_STATE",
                         "data": {
@@ -111,10 +134,11 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied GET_STATE", flush=True)
                 elif msg["cmd"] == "SET_EE_POSE":
                     if self.last_eef_cmd is None:
                         error_str = "Error: Cannot set EE pose before RESET_TO_HOME. Please check the input."
-                        print(error_str)
+                        print(error_str, flush=True)
                         self.socket.send_pyobj(
                             {
                                 "cmd": "SET_EE_POSE",
@@ -127,7 +151,7 @@ class Arx5Server:
 
                     if np.linalg.norm(target_ee_pose - self.last_eef_cmd) > 0.1:
                         error_str = f"Error: Cannot set EE pose {target_ee_pose} far away from last command: {self.last_eef_cmd}. Please check the input."
-                        print(error_str)
+                        print(error_str, flush=True)
                         self.socket.send_pyobj(
                             {
                                 "cmd": "SET_EE_POSE",
@@ -153,7 +177,7 @@ class Arx5Server:
                             > 0.1
                         ):
                             error_str = f"Error: Cannot set EE pose far away from home: {target_ee_pose} after RESET_TO_HOME. Please check the input."
-                            print(error_str)
+                            print(error_str, flush=True)
                             self.socket.send_pyobj(
                                 {
                                     "cmd": "SET_EE_POSE",
@@ -181,9 +205,10 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied SET_EE_POSE", flush=True)
                     self.is_reset_to_home = False
                 elif msg["cmd"] == "RESET_TO_HOME":
-                    print(f"Received RESET_TO_HOME message")
+                    print(f"Received RESET_TO_HOME message", flush=True)
                     self.arx5_cartesian_controller.reset_to_home()
                     reply_msg = {
                         "cmd": "RESET_TO_HOME",
@@ -191,18 +216,20 @@ class Arx5Server:
                     }
                     self.last_eef_cmd = self.arx5_cartesian_controller.get_eef_cmd().pose_6d().copy()
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied RESET_TO_HOME", flush=True)
                     self.is_reset_to_home = True
                 elif msg["cmd"] == "SET_TO_DAMPING":
-                    print(f"Received SET_TO_DAMPING message")
+                    print(f"Received SET_TO_DAMPING message", flush=True)
                     self.arx5_cartesian_controller.set_to_damping()
                     reply_msg = {
                         "cmd": "SET_TO_DAMPING",
                         "data": "OK",
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied SET_TO_DAMPING", flush=True)
                     self.is_reset_to_home = False
                 elif msg["cmd"] == "GET_GAIN":
-                    print(f"Received GET_GAIN message")
+                    print(f"Received GET_GAIN message", flush=True)
                     gain = self.arx5_cartesian_controller.get_gain()
                     reply_msg = {
                         "cmd": "GET_GAIN",
@@ -214,8 +241,9 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied GET_GAIN", flush=True)
                 elif msg["cmd"] == "SET_GAIN":
-                    print(f"Received SET_GAIN message, data: {msg['data']}")
+                    print(f"Received SET_GAIN message, data: {msg['data']}", flush=True)
                     assert isinstance(msg["data"], dict)
 
                     kp = cast(np.ndarray, msg["data"]["kp"])
@@ -230,6 +258,7 @@ class Arx5Server:
                         "data": "OK",
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied SET_GAIN", flush=True)
                 else:
                     raise ValueError(f"Unknown message type: {msg['cmd']}")
             except KeyboardInterrupt:

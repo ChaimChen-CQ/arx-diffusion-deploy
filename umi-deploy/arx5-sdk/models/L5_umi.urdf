@@ -15,7 +15,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/base_link.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/base_link_arm.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.89804 0.91765 0.92941 1" />
@@ -24,7 +24,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/base_link.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/base_link_arm.STL" />
             </geometry>
         </collision>
     </link>
@@ -38,7 +38,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link1.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link1.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.56471 0.56471 0.56471 1" />
@@ -47,7 +47,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link1.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link1.STL" />
             </geometry>
         </collision>
     </link>
@@ -72,7 +72,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link2.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link2.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.69804 0.69804 0.69804 1" />
@@ -81,7 +81,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link2.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link2.STL" />
             </geometry>
         </collision>
     </link>
@@ -106,7 +106,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link3.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link3.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.89804 0.91765 0.92941 1" />
@@ -115,7 +115,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link3.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link3.STL" />
             </geometry>
         </collision>
     </link>
@@ -140,7 +140,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link4.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link4.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.56471 0.56471 0.56471 1" />
@@ -149,7 +149,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link4.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link4.STL" />
             </geometry>
         </collision>
     </link>
@@ -174,7 +174,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link5.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link5.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.69804 0.69804 0.69804 1" />
@@ -183,7 +183,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link5.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link5.STL" />
             </geometry>
         </collision>
     </link>
@@ -204,7 +204,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link6.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link6.STL" />
             </geometry>
             <material name="">
                 <color rgba="0.79216 0.81961 0.93333 1" />
@@ -213,7 +213,142 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://meshes/L5/link6.STL" />
+                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link6.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0 -0.0225 -0.0225" rpy="1.5707963 0 1.5707963" />
+            <geometry>
+                <mesh filename="meshes/DAS_Controller_v3_r5_end_adapter_flange.STL" scale="0.001 0.001 0.001" />
+            </geometry>
+            <material name="">
+                <color rgba="0.89804 0.91765 0.92941 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 -0.0225 -0.0225" rpy="1.5707963 0 1.5707963" />
+            <geometry>
+                <mesh filename="meshes/DAS_Controller_v3_r5_end_adapter_flange.STL" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.0091 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link_Flange.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.89804 0.91765 0.92941 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0091 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link_Flange.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.0999414 0.0000388 0.0767217" rpy="0 0.2618 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/base_link.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="1 1 1 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0999414 0.0000388 0.0767217" rpy="0 0.2618 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/base_link.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.1066203 0.0429998 0.0136096" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link1.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="1 1 1 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.1066203 0.0429998 0.0136096" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link1.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.1498023 0.0887898 0.0136095" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link3.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.498039 0.498039 0.498039 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.1498023 0.0887898 0.0136095" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link3.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.1066203 -0.0430002 0.0136096" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link2.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.792157 0.819608 0.933333 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.1066203 -0.0430002 0.0136096" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link2.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.1498023 -0.0887902 0.0136095" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link4.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.498039 0.498039 0.498039 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.1498023 -0.0887902 0.0136095" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link4.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.1218700 0.0195168 0.0136097" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link5.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.796078 0.823529 0.937255 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.1218700 0.0195168 0.0136097" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link5.STL" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0.1218700 -0.0195172 0.0136097" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link6.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0.796078 0.823529 0.937255 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.1218700 -0.0195172 0.0136097" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="meshes/L5_umi/umi/link6.STL" />
             </geometry>
         </collision>
     </link>
@@ -234,7 +369,7 @@
     </link>
 
     <joint name="gripper_fixed_joint" type="fixed">
-        <origin xyz="0.235 0.0 0.0" rpy="0 0 0" />
+        <origin xyz="0.0999414 0.0000388 0.0767217" rpy="0 0.2618 0" />
         <parent link="link6" />
         <child link="eef_link" />
     </joint>
