@@ -209,27 +209,12 @@
                 izz="0.00045" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link6.STL" />
-            </geometry>
-            <material name="">
-                <color rgba="0.79216 0.81961 0.93333 1" />
-            </material>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <mesh filename="meshes/L5_umi/arm/raw_meshes_ARM/link6.STL" />
-            </geometry>
-        </collision>
-        <visual>
             <origin xyz="0 -0.0225 -0.0225" rpy="1.5707963 0 1.5707963" />
             <geometry>
                 <mesh filename="meshes/DAS_Controller_v3_r5_end_adapter_flange.STL" scale="0.001 0.001 0.001" />
             </geometry>
             <material name="">
-                <color rgba="0.89804 0.91765 0.92941 1" />
+                <color rgba="0.62 0.62 0.62 1" />
             </material>
         </visual>
         <collision>
