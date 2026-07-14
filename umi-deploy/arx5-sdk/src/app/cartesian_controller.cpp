@@ -26,6 +26,27 @@ Arx5CartesianController::Arx5CartesianController(std::string model, std::string 
 {
 }
 
+void Arx5CartesianController::set_joint_cmd(JointState new_cmd)
+{
+    if (new_cmd.pos.size() != robot_config_.joint_dof || !new_cmd.pos.allFinite())
+        throw std::invalid_argument("Joint command must contain finite values for every joint");
+
+    for (int i = 0; i < robot_config_.joint_dof; ++i)
+    {
+        if (new_cmd.pos[i] < robot_config_.joint_pos_min[i] || new_cmd.pos[i] > robot_config_.joint_pos_max[i])
+            throw std::invalid_argument("Joint command is outside the configured joint limits");
+    }
+
+    double current_time = get_timestamp();
+    if (new_cmd.timestamp == 0)
+        new_cmd.timestamp = current_time + controller_config_.default_preview_time;
+    if (new_cmd.timestamp <= current_time)
+        throw std::invalid_argument("Joint command timestamp must be in the future");
+
+    std::lock_guard<std::mutex> guard(cmd_mutex_);
+    interpolator_.override_waypoint(current_time, new_cmd);
+}
+
 void Arx5CartesianController::set_eef_cmd(EEFState new_cmd)
 {
     JointState current_joint_state = get_joint_state();

@@ -53,6 +53,7 @@ class Command(enum.Enum):
     UPDATE_TRAJECTORY = 5
     SET_GRIPPER_PHASE = 6
     SET_JOINT_POS = 7
+    SET_TO_DAMPING = 8
 
 
 class Arx5Controller(mp.Process):
@@ -263,6 +264,18 @@ class Arx5Controller(mp.Process):
                 break
             time.sleep(0.05)
 
+    def set_to_damping(self, timeout: float = 2.0):
+        if not self.is_alive():
+            return
+        self.reset_success.value = False
+        self.input_queue.put({"cmd": Command.SET_TO_DAMPING.value})
+        start_time = time.monotonic()
+        while not self.reset_success.value:
+            if time.monotonic() - start_time > timeout:
+                print(f"\n[WARN] set_to_damping 等待超时 ({timeout}s)。")
+                break
+            time.sleep(0.05)
+
     def reset_to_home(self, timeout=5.0):
         self.reset_success.value = False
         message = {"cmd": Command.RESET_TO_HOME.value}
@@ -396,16 +409,12 @@ class Arx5Controller(mp.Process):
             t_start = time.monotonic()
             iter_idx = 0
             keep_running = True
+            joint_motion_end_time = 0.0
+            joint_motion_was_active = False
             while keep_running:
                 t_now = time.monotonic()
-                pose_cmd = pose_interp(t_now)
-                scheduled_gripper_cmd = float(gripper_pos_interp(t_now)[0])
-                gripper_cmd = _resolve_gripper_command(scheduled_gripper_cmd, t_now)
-
-                try:
-                    self.robot_client.set_tcp_pose(pose_cmd, 0.0)
-                except ValueError as e:
-                    print(f"\n[WARN] 忽略跳变动作 (ZMQ Reject): {e}")
+                joint_motion_active = t_now < joint_motion_end_time
+                if joint_motion_was_active and not joint_motion_active:
                     self.robot_client.get_state()
                     curr_pose = self.robot_client.tcp_pose
                     pose_interp = PoseTrajectoryInterpolator(
@@ -414,6 +423,26 @@ class Arx5Controller(mp.Process):
                     gripper_pos_interp = _reset_gripper_interp(t_now)
                     self.waypoint_buffer.clear()
                     last_waypoint_time = t_now
+                    joint_motion_was_active = False
+                    print("[Arx5Controller] Joint motion finished; Cartesian stream resumed")
+
+                pose_cmd = pose_interp(t_now)
+                scheduled_gripper_cmd = float(gripper_pos_interp(t_now)[0])
+                gripper_cmd = _resolve_gripper_command(scheduled_gripper_cmd, t_now)
+
+                if not joint_motion_active:
+                    try:
+                        self.robot_client.set_tcp_pose(pose_cmd, 0.0)
+                    except ValueError as e:
+                        print(f"\n[WARN] 忽略跳变动作 (ZMQ Reject): {e}")
+                        self.robot_client.get_state()
+                        curr_pose = self.robot_client.tcp_pose
+                        pose_interp = PoseTrajectoryInterpolator(
+                            times=np.array([t_now]), poses=np.array([curr_pose])
+                        )
+                        gripper_pos_interp = _reset_gripper_interp(t_now)
+                        self.waypoint_buffer.clear()
+                        last_waypoint_time = t_now
                 if gripper_bus is not None:
                     try:
                         gripper_bus.set_target_distance(float(gripper_cmd))
@@ -526,6 +555,13 @@ class Arx5Controller(mp.Process):
                         gain["kp"] = np.array([300, 300, 400, 80, 50, 30])
                         self.robot_client.set_gain(gain)
 
+                    elif cmd == Command.SET_TO_DAMPING.value:
+                        self.robot_client.set_to_damping()
+                        joint_motion_end_time = 0.0
+                        self.reset_success.value = True
+                        if self.verbose:
+                            print("[Arx5Controller] Set to damping")
+
                     elif cmd == Command.SET_JOINT_POS.value:
                         target_joint_pos = np.asarray(command["target_joint_pos"], dtype=np.float64)
                         duration = float(command["duration"])
@@ -535,11 +571,25 @@ class Arx5Controller(mp.Process):
                         gripper_target = command["gripper_pos"]
                         if np.isfinite(gripper_target):
                             current_gripper_pos = float(gripper_target)
-                        self.robot_client.set_joint_pos(
-                            target_joint_pos,
-                            gripper_pos=current_gripper_pos,
-                            duration=duration,
-                            max_joint_step_rad=max_joint_step_rad,
+                        try:
+                            joint_result = self.robot_client.set_joint_pos(
+                                target_joint_pos,
+                                gripper_pos=current_gripper_pos,
+                                duration=duration,
+                                max_joint_step_rad=max_joint_step_rad,
+                            )
+                        except Exception as exc:
+                            print(f"[Arx5Controller] SET_JOINT_POS rejected: {exc}")
+                            self.reset_success.value = True
+                            continue
+                        scheduled_duration = float(
+                            joint_result.get("scheduled_duration", duration)
+                        )
+                        joint_motion_end_time = time.monotonic() + scheduled_duration
+                        joint_motion_was_active = True
+                        print(
+                            f"[Arx5Controller] Cartesian stream paused for "
+                            f"{scheduled_duration:.2f}s joint motion"
                         )
                         self.robot_client.get_state()
 

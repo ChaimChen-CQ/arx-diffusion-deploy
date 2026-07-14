@@ -22,3 +22,8 @@ install/
 __pycache__/
 *.pyc
 .cache/
+
+# Local datasets and generated builds
+data/
+trained_ckpt/
+umi-deploy/arx5-sdk/build_current/

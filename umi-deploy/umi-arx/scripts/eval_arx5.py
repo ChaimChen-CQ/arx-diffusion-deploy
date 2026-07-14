@@ -505,6 +505,20 @@ def parse_bias_input(text):
     return np.asarray(values, dtype=np.float64)
 
 
+def apply_action_z_bias(action, action_z_bias):
+    """Apply a fixed ARX-base Z offset to every robot target pose."""
+    action_arr = np.asarray(action)
+    if action_arr.shape[-1] % 7 != 0:
+        raise ValueError(
+            "Expected action last dimension to be a multiple of 7 "
+            f"(pose6 + gripper1), got {action_arr.shape[-1]}"
+        )
+
+    biased_action = np.array(action_arr, copy=True)
+    biased_action[..., 2::7] += action_z_bias
+    return biased_action
+
+
 def make_runtime_bias_snapshot(
     episode_id,
     iter_idx,
@@ -685,6 +699,12 @@ def save_runtime_bias_snapshot(
     type=float,
     help="Seconds to schedule robot actions into the future.",
 )
+@click.option(
+    "--disable_dynamic_latency",
+    is_flag=True,
+    default=False,
+    help="Disable trajectory phase matching and honor scheduled action timestamps.",
+)
 @click.option("-nm", "--no_mirror", is_flag=True, default=False)
 @click.option("-sf", "--sim_fov", type=float, default=None)
 @click.option(
@@ -706,6 +726,16 @@ def save_runtime_bias_snapshot(
     type=str,
     default=None,
     help="Path to runtime pose calibration json/yaml.",
+)
+@click.option(
+    "--action_z_bias",
+    type=float,
+    default=0.0,
+    show_default=True,
+    help=(
+        "Fixed Z offset in meters applied to every target action in the ARX base "
+        "frame after pose conversion. Negative values move targets downward."
+    ),
 )
 @click.option("--mirror_swap", is_flag=True, default=False)
 @click.option(
@@ -765,11 +795,13 @@ def main(
     max_duration,
     frequency,
     command_latency,
+    disable_dynamic_latency,
     no_mirror,
     sim_fov,
     camera_intrinsics,
     gripper_fisheye_intrinsics,
     runtime_calibration,
+    action_z_bias,
     mirror_swap,
     log_runtime_transforms,
     record_bias_on_stop,
@@ -789,6 +821,12 @@ def main(
     gripper_speed = 0.02
     cartesian_speed = 0.4
     orientation_speed = 0.8
+
+    if action_z_bias != 0.0:
+        print(
+            f"[ACTION_BIAS] Applying ARX-base Z bias to all policy targets: "
+            f"{action_z_bias:+.6f} m"
+        )
 
     os.makedirs(output, exist_ok=True)
     os.makedirs(os.path.join(output, "obs"), exist_ok=True)
@@ -904,9 +942,12 @@ def main(
     # ===== 安全终止与姿态规划常量区 =====
 
     # Joint-space initial/rest targets for ARX Python SDK control.
-    INIT_JOINT_POS = np.array([0.0, 1.5, 0.0, 0.0, 0.0, 0.0])
+    INIT_JOINT_POS = np.array([0.0, 0.5, 0.0, 0.0, 0.0, 0.0])
     REST_JOINT_POS = np.zeros(6)
-    ENABLE_JOINT_HOTKEYS = False
+    ENABLE_JOINT_HOTKEYS = True
+    ENABLE_JOINT_REST_ON_EXIT = False
+    JOINT_MOVE_DURATION_S = 2.5
+    JOINT_MAX_STEP_RAD = 1.6
 
     # 真实示教获取的 15° 俯角完美绝对观察坐标
     # OBS_POSE = np.array([ 0.2822,  0.0005,  0.1973, -1.3598,  1.3505, -1.1064]) # L5
@@ -938,7 +979,7 @@ def main(
                     gripper_target = float(robot_states[idx]["gripper_position"])
                 except Exception:
                     pass
-            if ENABLE_JOINT_HOTKEYS:
+            if ENABLE_JOINT_REST_ON_EXIT:
                 print(f"[SAFE TEARDOWN] 机器人 {idx} 正在移动至 joint rest 全 0...")
                 env_obj.robots[idx].set_joint_pos(
                     REST_JOINT_POS,
@@ -1204,6 +1245,7 @@ def main(
                 action = convert_policy_action_to_env_frame(
                     policy_action, runtime_pose_transform
                 )
+            action = apply_action_z_bias(action, action_z_bias)
             assert action.shape[-1] == 7 * len(robots_config)
             if log_runtime_transforms:
                 log_runtime_transform_step(
@@ -1366,13 +1408,13 @@ def main(
                                 env.robots[robot_idx].set_joint_pos(
                                     INIT_JOINT_POS,
                                     obs_gripper,
-                                    duration=2.0,
-                                    max_joint_step_rad=np.pi,
+                                    duration=JOINT_MOVE_DURATION_S,
+                                    max_joint_step_rad=JOINT_MAX_STEP_RAD,
                                     timeout=4.0,
                                 )
                             
                             start_wait_t = time.monotonic()
-                            wait_duration = 2.0
+                            wait_duration = JOINT_MOVE_DURATION_S
                             aborted = False
                             # 非阻塞事件泵循环
                             while time.monotonic() - start_wait_t < wait_duration:
@@ -1385,7 +1427,9 @@ def main(
                                         safe_teardown(env, socket, context)
                                         exit(0)
                                     if sub_k == KeyCode(char="s"):
-                                        print("\n[ACTION] s键触发(在此期间)：取消前往观测位姿！")
+                                        print("\n[ACTION] s键触发(在此期间)：切换到 damping 并中断 joint 轨迹！")
+                                        for robot_idx in control_robot_idx_list:
+                                            env.robots[robot_idx].set_to_damping()
                                         aborted = True
                                         break
                                 if aborted:
@@ -1637,6 +1681,7 @@ def main(
                             action = convert_policy_action_to_env_frame(
                                 policy_action, runtime_pose_transform
                             )
+                        action = apply_action_z_bias(action, action_z_bias)
                         
                         # # --- FIX: Convert network's Axis-Angle back to ARX5 Native Euler (XYZ) ---
                         # for r_idx in range(len(robots_config)):
@@ -1650,6 +1695,7 @@ def main(
                             "raw_action": raw_action,
                             "action_pose_repr": action_pose_repr,
                             "action_reference_frame": runtime_pose_transform.action_reference_frame,
+                            "action_z_bias": action_z_bias,
                             "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
                         }
                         np.save(
@@ -1772,7 +1818,7 @@ def main(
                                 actions=this_target_poses,
                                 timestamps=action_timestamps,
                                 # compensate_latency=True
-                                dynamic_latency=True,
+                                dynamic_latency=not disable_dynamic_latency,
                             )
                             print(f"Submitted {len(this_target_poses)} steps of actions.")
 

@@ -27,6 +27,7 @@ class Arx5CartesianController : public Arx5ControllerBase
 
     void set_eef_cmd(EEFState new_cmd);
     void set_eef_traj(std::vector<EEFState> new_traj);
+    void set_joint_cmd(JointState new_cmd);
     EEFState get_eef_cmd();
 
     std::tuple<int, Eigen::VectorXd> multi_trial_ik(Eigen::Matrix<double, 6, 1> target_pose_6d,

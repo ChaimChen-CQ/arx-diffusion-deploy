@@ -17,9 +17,12 @@ Arx5ControllerBase::Arx5ControllerBase(RobotConfig robot_config, ControllerConfi
     logger_->set_pattern("[%H:%M:%S %n %^%l%$] %v");
     if (controller_config_.gravity_compensation)
     {
+        // The explicit-gravity Arx5Solver constructor segfaults with the
+        // current SDK binary. The default constructor still builds the inverse
+        // dynamics solver correctly, and inverse_dynamics() is used below when
+        // gravity_compensation is enabled.
         solver_ = std::make_shared<Arx5Solver>(
-            robot_config_.urdf_path, robot_config_.joint_dof, robot_config_.joint_pos_min, robot_config_.joint_pos_max,
-            robot_config_.base_link_name, robot_config_.eef_link_name, robot_config_.gravity_vector);
+            robot_config_.urdf_path, robot_config_.joint_dof, robot_config_.joint_pos_min, robot_config_.joint_pos_max);
     }
     else
     {

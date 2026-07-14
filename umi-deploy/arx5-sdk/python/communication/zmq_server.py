@@ -39,7 +39,7 @@ class Arx5Server:
         controller_config = arx5.ControllerConfigFactory.get_instance().get_config(
             "cartesian_controller", robot_config.joint_dof
         )
-        controller_config.gravity_compensation = False
+        controller_config.gravity_compensation = True
         self.arx5_cartesian_controller = arx5.Arx5CartesianController(
             robot_config, controller_config, interface
         )
@@ -74,7 +74,7 @@ class Arx5Server:
                                 "cartesian_controller", robot_config.joint_dof
                             )
                         )
-                        controller_config.gravity_compensation = False
+                        controller_config.gravity_compensation = True
                         self.arx5_cartesian_controller = arx5.Arx5CartesianController(
                             robot_config, controller_config, self.interface
                         )
@@ -112,6 +112,7 @@ class Arx5Server:
                 elif msg["cmd"] == "GET_STATE":
                     print("Handling GET_STATE", flush=True)
                     eef_pose_cmd = self.arx5_cartesian_controller.get_eef_cmd()
+                    self.last_eef_cmd = eef_pose_cmd.pose_6d().copy()
                     print("GET_STATE get_eef_cmd done", flush=True)
                     eef_state = self.arx5_cartesian_controller.get_eef_state()
                     print("GET_STATE get_eef_state done", flush=True)
@@ -135,6 +136,80 @@ class Arx5Server:
                     }
                     self.socket.send_pyobj(reply_msg)
                     print("Replied GET_STATE", flush=True)
+                elif msg["cmd"] == "SET_JOINT_POS":
+                    print(f"Received SET_JOINT_POS message, data: {msg['data']}", flush=True)
+                    data = msg["data"]
+                    if not isinstance(data, dict):
+                        raise ValueError("SET_JOINT_POS data must be a dictionary")
+
+                    target_joint_pos = np.asarray(data.get("joint_pos"), dtype=np.float64)
+                    if target_joint_pos.shape != (6,) or not np.all(np.isfinite(target_joint_pos)):
+                        raise ValueError("SET_JOINT_POS requires 6 finite joint values")
+
+                    robot_config = self.arx5_cartesian_controller.get_robot_config()
+                    if np.any(target_joint_pos < robot_config.joint_pos_min) or np.any(
+                        target_joint_pos > robot_config.joint_pos_max
+                    ):
+                        raise ValueError(
+                            f"Joint target is outside limits: min={robot_config.joint_pos_min}, "
+                            f"max={robot_config.joint_pos_max}, target={target_joint_pos}"
+                        )
+
+                    low_state = self.arx5_cartesian_controller.get_joint_state()
+                    current_joint_pos = low_state.pos().copy()
+                    max_delta = float(np.max(np.abs(target_joint_pos - current_joint_pos)))
+                    requested_max_step = float(data.get("max_joint_step_rad", 0.05))
+                    if not np.isfinite(requested_max_step) or requested_max_step <= 0:
+                        raise ValueError("max_joint_step_rad must be finite and positive")
+                    allowed_max_step = min(requested_max_step, 1.6)
+                    if max_delta > allowed_max_step:
+                        raise ValueError(
+                            f"Joint target delta {max_delta:.3f} rad exceeds allowed "
+                            f"{allowed_max_step:.3f} rad"
+                        )
+
+                    requested_duration = float(data.get("duration", 2.0))
+                    if not np.isfinite(requested_duration) or requested_duration <= 0:
+                        raise ValueError("duration must be finite and positive")
+                    duration = max(requested_duration, 2.0, max_delta / 0.2)
+                    if duration > 30.0:
+                        raise ValueError(f"Required joint trajectory duration {duration:.1f}s exceeds 30s")
+
+                    gripper_pos = data.get("gripper_pos")
+                    if gripper_pos is None:
+                        gripper_pos = low_state.gripper_pos
+                    gripper_pos = float(gripper_pos)
+                    if not np.isfinite(gripper_pos):
+                        raise ValueError("gripper_pos must be finite")
+
+                    joint_cmd = arx5.JointState(robot_config.joint_dof)
+                    joint_cmd.pos()[:] = target_joint_pos
+                    joint_cmd.gripper_pos = gripper_pos
+                    joint_cmd.timestamp = self.arx5_cartesian_controller.get_timestamp() + duration
+                    self.arx5_cartesian_controller.set_joint_cmd(joint_cmd)
+                    self.is_reset_to_home = False
+
+                    eef_state = self.arx5_cartesian_controller.get_eef_state()
+                    reply_msg = {
+                        "cmd": "SET_JOINT_POS",
+                        "data": {
+                            "timestamp": eef_state.timestamp,
+                            "ee_pose": eef_state.pose_6d().copy(),
+                            "joint_pos": low_state.pos().copy(),
+                            "joint_vel": low_state.vel().copy(),
+                            "joint_torque": low_state.torque().copy(),
+                            "gripper_pos": low_state.gripper_pos,
+                            "gripper_vel": low_state.gripper_vel,
+                            "gripper_torque": low_state.gripper_torque,
+                            "scheduled_duration": duration,
+                        },
+                    }
+                    self.socket.send_pyobj(reply_msg)
+                    print(
+                        f"Replied SET_JOINT_POS; scheduled {duration:.2f}s trajectory, "
+                        f"max delta {max_delta:.3f} rad",
+                        flush=True,
+                    )
                 elif msg["cmd"] == "SET_EE_POSE":
                     if self.last_eef_cmd is None:
                         error_str = "Error: Cannot set EE pose before RESET_TO_HOME. Please check the input."
