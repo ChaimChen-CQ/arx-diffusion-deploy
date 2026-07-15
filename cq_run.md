@@ -28,8 +28,8 @@ conda activate umi-cu128-py311
 cd /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/umi-deploy/detached-umi-policy
 
 python detached_policy_inference.py \
-  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260713/latest.ckpt \
-  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260713/latest.yaml \
+  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260714/latest.ckpt \
+  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260714/latest.yaml \
   --ip 0.0.0.0 \
   --port 8766 \
   --device cuda
@@ -43,8 +43,8 @@ conda activate umi-arx
 cd /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/umi-deploy/umi-arx
 
 GEN_GRIPPER_SERIAL_PORT=/dev/ttyUSB0 python scripts/eval_arx5.py \
-  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260713/latest.ckpt \
-  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260713/latest.yaml \
+  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260714/latest.ckpt \
+  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260714/latest.yaml \
   -o data_local/eval_latest_debug_gripperfix \
   --policy_ip 127.0.0.1 \
   --policy_port 8766 \
