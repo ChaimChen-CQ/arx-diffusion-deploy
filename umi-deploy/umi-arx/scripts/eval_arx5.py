@@ -1219,6 +1219,7 @@ def main(
                     env,
                     f"Warmup inference from PolicyInferenceNode failed: {raw_action}. Please check the model.",
                 )
+            raw_action = np.asarray(raw_action, dtype=np.float32)
             print(
                 f"Got response from PolicyInferenceNode. Inference time: {time.monotonic() - start_time:.3f} s"
             )
@@ -1666,6 +1667,7 @@ def main(
                                 env, GripperControlPhase.PRE_POLICY_HOLD
                             )
                             break
+                        raw_action = np.asarray(raw_action, dtype=np.float32)
                         if runtime_pose_transform.uses_camera_frame_action:
                             policy_action = get_camera_frame_umi_action(
                                 raw_action,

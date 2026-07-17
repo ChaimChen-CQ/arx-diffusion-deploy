@@ -121,6 +121,11 @@ class PolicyInferenceNode:
                 err_str = echo_exception()
                 print(f'Error: {err_str}')
                 action = err_str
+            # NumPy 2.x pickles arrays through ``numpy._core`` while older
+            # clients may only provide ``numpy.core``. Send successful actions
+            # as builtin lists so inference works across NumPy major versions.
+            if isinstance(action, np.ndarray):
+                action = action.tolist()
             socket.send_pyobj(action)
     
 @click.command()
