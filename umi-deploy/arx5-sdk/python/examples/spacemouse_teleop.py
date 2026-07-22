@@ -165,6 +165,7 @@ def main(model: str, interface: str):
     controller_config = ControllerConfigFactory.get_instance().get_config(
         "cartesian_controller", robot_config.joint_dof
     )
+    controller_config.gravity_compensation = False
     # controller_config.interpolation_method = "cubic"
     controller_config.default_kp = controller_config.default_kp
     controller = Arx5CartesianController(robot_config, controller_config, interface)

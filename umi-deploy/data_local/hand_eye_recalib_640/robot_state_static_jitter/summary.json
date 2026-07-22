@@ -1,0 +1,129 @@
+{
+  "sample_count": 1500,
+  "duration_host_sec": 14.99018144607544,
+  "joint_state": {
+    "j1": {
+      "mean_rad": 0.00247955322265625,
+      "std_rad": 0.0,
+      "range_rad": 0.0,
+      "max_delta_from_first_rad": 0.0,
+      "mean_deg": 0.14206793473626522,
+      "std_deg": 0.0,
+      "range_deg": 0.0,
+      "max_delta_from_first_deg": 0.0
+    },
+    "j2": {
+      "mean_rad": 0.00324249267578125,
+      "std_rad": 0.0,
+      "range_rad": 0.0,
+      "max_delta_from_first_rad": 0.0,
+      "mean_deg": 0.18578114542434682,
+      "std_deg": 0.0,
+      "range_deg": 0.0,
+      "max_delta_from_first_deg": 0.0
+    },
+    "j3": {
+      "mean_rad": 0.007372538248697917,
+      "std_rad": 0.00014439971482928861,
+      "range_rad": 0.0003814697265625,
+      "max_delta_from_first_rad": 0.0003814697265625,
+      "mean_deg": 0.4224153259491619,
+      "std_deg": 0.008273494222610884,
+      "range_deg": 0.021856605344040804,
+      "max_delta_from_first_deg": 0.021856605344040804
+    },
+    "j4": {
+      "mean_rad": -0.16726741790771485,
+      "std_rad": 6.070524699259219e-05,
+      "range_rad": 0.0003814697265625,
+      "max_delta_from_first_rad": 0.0003814697265625,
+      "mean_deg": -9.583717096163028,
+      "std_deg": 0.0034781544469747656,
+      "range_deg": 0.021856605344040804,
+      "max_delta_from_first_deg": 0.021856605344040804
+    },
+    "j5": {
+      "mean_rad": -0.034142494201660156,
+      "std_rad": 0.0,
+      "range_rad": 0.0,
+      "max_delta_from_first_rad": 0.0,
+      "mean_deg": -1.956220819805012,
+      "std_deg": 0.0,
+      "range_deg": 0.0,
+      "max_delta_from_first_deg": 0.0
+    },
+    "j6": {
+      "mean_rad": -0.00476837158203125,
+      "std_rad": 0.0,
+      "range_rad": 0.0,
+      "max_delta_from_first_rad": 0.0,
+      "mean_deg": -0.27320756680051006,
+      "std_deg": 0.0,
+      "range_deg": 0.0,
+      "max_delta_from_first_deg": 0.0
+    }
+  },
+  "tcp_pose": {
+    "position_delta_from_first_mm": {
+      "mean": 0.023376087252148143,
+      "std": 0.04945131611121415,
+      "min": 0.0,
+      "max": 0.13181609556223647,
+      "range": 0.13181609556223647
+    },
+    "rotation_delta_from_first_deg": {
+      "mean": 0.004123612874053944,
+      "std": 0.008551256985148453,
+      "min": 0.0,
+      "max": 0.02185660534316178,
+      "range": 0.02185660534316178
+    },
+    "max_position_delta_from_first_mm": 0.13181609556223647,
+    "max_rotation_delta_from_first_deg": 0.02185660534316178
+  },
+  "ee_pose": {
+    "position_delta_from_first_mm": {
+      "mean": 0.023376087252148143,
+      "std": 0.04945131611121415,
+      "min": 0.0,
+      "max": 0.13181609556223647,
+      "range": 0.13181609556223647
+    },
+    "rotation_delta_from_first_deg": {
+      "mean": 0.00412361287474319,
+      "std": 0.008551256986577757,
+      "min": 0.0,
+      "max": 0.02185660534316178,
+      "range": 0.02185660534316178
+    },
+    "max_position_delta_from_first_mm": 0.13181609556223647,
+    "max_rotation_delta_from_first_deg": 0.02185660534316178
+  },
+  "timestamp_intervals": {
+    "host_sec": {
+      "mean": 0.01000012104474679,
+      "std": 0.0002961534550050658,
+      "min": 0.00897979736328125,
+      "max": 0.010937213897705078,
+      "range": 0.001957416534423828
+    },
+    "robot_sec": {
+      "mean": 0.009999811874583056,
+      "std": 0.0007313756961405362,
+      "min": 0.008089999999999264,
+      "max": 0.010726999999999265,
+      "range": 0.0026370000000000005
+    },
+    "get_state_duration_ms": {
+      "mean": 0.8190217018127441,
+      "std": 0.22720137263528042,
+      "min": 0.2732276916503906,
+      "max": 1.7843246459960938,
+      "range": 1.5110969543457031
+    }
+  },
+  "robot": "tcp://127.0.0.1:8765",
+  "requested_duration_sec": 15.0,
+  "requested_frequency_hz": 100.0,
+  "csv_path": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/robot_state_static_jitter/robot_state_static_jitter.csv"
+}

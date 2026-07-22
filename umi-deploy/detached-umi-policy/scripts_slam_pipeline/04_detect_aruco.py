@@ -1,7 +1,7 @@
 """
 python scripts_slam_pipeline/04_detect_aruco.py \
 -i data_workspace/cup_in_the_wild/20240105_zhenjia_packard_2nd_conference_room/demos \
--ci data_workspace/toss_objects/20231113/calibration/gopro_intrinsics_2_7k.json \
+-ci data_workspace/toss_objects/20231113/calibration/gripper_fisheye_intrinsics.json \
 -ac data_workspace/toss_objects/20231113/calibration/aruco_config.yaml
 """
 # %%
@@ -23,7 +23,7 @@ from tqdm import tqdm
 # %%
 @click.command()
 @click.option('-i', '--input_dir', required=True, help='Directory for demos folder')
-@click.option('-ci', '--camera_intrinsics', required=True, help='Camera intrinsics json file (2.7k)')
+@click.option('-ci', '--camera_intrinsics', required=True, help='Fisheye intrinsics JSON matching the video resolution')
 @click.option('-ac', '--aruco_yaml', required=True, help='Aruco config yaml file')
 @click.option('-n', '--num_workers', type=int, default=None)
 def main(input_dir, camera_intrinsics, aruco_yaml, num_workers):

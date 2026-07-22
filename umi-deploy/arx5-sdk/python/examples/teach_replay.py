@@ -6,7 +6,7 @@ import numpy as np
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
-from arx5_interface import Arx5CartesianController, EEFState, Gain
+from arx5_interface import Arx5CartesianController, ControllerConfigFactory, EEFState, Gain, RobotConfigFactory
 
 import time
 from peripherals.keystroke_counter import KeystrokeCounter, KeyCode
@@ -106,7 +106,12 @@ def start_high_level_replay(controller: Arx5CartesianController, data_file: str)
 @click.argument("model")  # ARX arm model: X5 or L5
 @click.argument("interface")  # can bus name (can0 etc.)
 def main(model: str, interface: str):
-    controller = Arx5CartesianController(model, interface)
+    robot_config = RobotConfigFactory.get_instance().get_config(model)
+    controller_config = ControllerConfigFactory.get_instance().get_config(
+        "cartesian_controller", robot_config.joint_dof
+    )
+    controller_config.gravity_compensation = False
+    controller = Arx5CartesianController(robot_config, controller_config, interface)
 
     np.set_printoptions(precision=4, suppress=True)
     os.makedirs("data", exist_ok=True)

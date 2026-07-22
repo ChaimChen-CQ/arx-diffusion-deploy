@@ -1,0 +1,80 @@
+{
+  "tx_base2world": [
+    [
+      0.1432630411417353,
+      -0.989340436029524,
+      0.026099859764615655,
+      -0.01748516779286213
+    ],
+    [
+      0.9888943513542158,
+      0.14204515612373322,
+      -0.043716535561600656,
+      -0.409380822629377
+    ],
+    [
+      0.03954317769914184,
+      0.03207296772510135,
+      0.998702989801652,
+      0.00014291254191960145
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "tx_gripper2camera": [
+    [
+      0.008829712246137284,
+      -0.9906733232269442,
+      0.13597206635236722,
+      -0.008896842089703717
+    ],
+    [
+      -0.33595951602549307,
+      -0.13101222952129468,
+      -0.9327202149132267,
+      0.11401188831820888
+    ],
+    [
+      0.9418350385144778,
+      -0.03744545850088832,
+      -0.3339829304980887,
+      -0.0667772826016019
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "matrix_semantics": {
+    "tx_base2world_key_actual_semantics": "T_world_base (^w T_b), OpenCV base-to-world output stored under legacy key tx_base2world",
+    "tx_gripper2camera_key_actual_semantics": "T_camera_gripper (^c T_g), OpenCV gripper-to-camera output stored under legacy key tx_gripper2camera",
+    "closed_loop_formula": "T_camera_world @ T_world_base == T_camera_gripper @ T_gripper_base"
+  },
+  "pose_key": "tcp_pose",
+  "pose_rotation_repr": "rotvec",
+  "variant": {
+    "name": "offset_250_350_bound5",
+    "detection_mode": "raw",
+    "distance_filter": "250_350",
+    "min_mm": 250.0,
+    "max_mm": 350.0,
+    "pose_source": "joint_state_corrected_fk",
+    "runtime_safe": false,
+    "offset_bound_deg": 5.0
+  },
+  "virtual_joint_zero_offsets_deg": [
+    2.741455,
+    4.397048,
+    -1.712281,
+    -5.0,
+    2.904289,
+    4.75494
+  ],
+  "runtime_warning": "Diagnostic only. Do not deploy unless runtime current_tcp_pose is computed from joint_state with the same offsets."
+}

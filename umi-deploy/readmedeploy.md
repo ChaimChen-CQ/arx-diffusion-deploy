@@ -11,9 +11,9 @@
 ## 整体架构
 
 ```
-[Gen夹爪 databus ROS节点]   ← USB串口 →  [Gen夹爪硬件]
-  发布 /encoder (Float32)                  含3个摄像头
-  订阅 /target_distance (Float32)
+[Gen夹爪 Python SDK DataBus] ← USB串口 →  [Gen夹爪硬件]
+  encoder_callback 读取开口距离
+  set_target_distance() 下发目标开口
 
 [MultiUvcCamera]  ← V4L2 直接读 →  [Gen夹爪中间摄像头 /dev/videoN]
 
@@ -23,16 +23,16 @@
 [Arx5Env + Arx5Controller]   (umi-arx/scripts/eval_arx5.py)
   ↑ 摄像头图像 (MultiUvcCamera)
   ↑ 机械臂状态 (ZMQ)
-  ↑ 夹爪位置 (/encoder)
+  ↑ 夹爪位置 (Python SDK encoder_callback)
   ↓ 机械臂指令 (ZMQ)
-  ↓ 夹爪指令 (/target_distance)
+  ↓ 夹爪指令 (Python SDK DataBus.set_target_distance)
 
 [detached_policy_inference.py]  ← ZMQ obs/action →  (GPU机器, port 8766)
   加载 .ckpt checkpoint
   DDIM 16步推理
 ```
 
-**注意**：摄像头不经过 ROS，由 MultiUvcCamera 直接读 V4L2，只有夹爪串口控制走 ROS。
+**注意**：全流程不再需要 ROS。摄像头由 MultiUvcCamera 直接读 V4L2，夹爪串口由 Gen Python SDK 的 DataBus 控制。
 
 ---
 
@@ -40,22 +40,23 @@
 
 ### 1. `umi-arx/modules/arx5_env.py` — 摄像头分辨率
 
-Gen夹爪摄像头原生分辨率为 1600x1296，原代码硬编码 1920x1080 已修正：
+当前部署统一使用 UMI 夹爪鱼眼相机 640x480 固定内参，runtime 会从内参 JSON 读取采集分辨率：
 
 ```python
 # 第115行
-res = (1600, 1296)  # gen gripper center camera native resolution
+res = gripper_camera_resolution
 fps = 30
 ```
 
-> 如果 `v4l2-ctl -d /dev/videoN --list-formats-ext` 显示不支持 1600x1296，改成实际支持的最高分辨率。
+> 如果要使用其他 UVC 分辨率，不要缩放 640x480 鱼眼内参；必须重新标定该分辨率。
 
-### 2. `umi-arx/modules/arx5_controller.py` — Gen夹爪 ROS 控制
+### 2. `umi-arx/modules/arx5_controller.py` — Gen夹爪 Python SDK 控制
 
 `run()` 方法里已加入：
-- 启动 ROS 节点，发布 `/target_distance`，订阅 `/encoder`
+- 启动 Gen Python SDK `DataBus`，只打开串口，不打开 SDK 相机
+- 通过 `encoder_callback` 读取实际夹爪开口距离
+- 通过 `DataBus.set_target_distance()` 写入目标夹爪开口
 - `set_tcp_pose` 不再传 gripper 命令给 arx5 SDK（传 0.0）
-- 从 `/encoder` 读取实际夹爪开口距离作为状态反馈
 
 ---
 
@@ -90,8 +91,8 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 ### 2. Gen 夹爪 USB 规则
 
 ```bash
-cd gen_controller_sdk_release
-# 按 README.md 配置 config/99-usb-serial.rules，然后：
+cd gen_con_sdk_python_release
+# 按 README.md / docs/usb-setup.md 配置 config/99-usb-serial.rules，然后：
 sudo cp config/99-usb-serial.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 # 成功后 /dev/ttyDeviceLeft 应指向夹爪串口
@@ -116,13 +117,33 @@ for i, p in enumerate(get_sorted_v4l_paths()):
 # 记下 gen 夹爪中间摄像头对应的 index，填到 --camera_reorder
 ```
 
-### 4. 编译 gen_controller_sdk
+### 4. 安装 / 测试 Gen Python SDK
 
 ```bash
-cd gen_controller_sdk_release
-catkin_make
-source devel/setup.bash
+cd gen_con_sdk_python_release
+pip install -r requirements.txt
+
+# 如果串口权限不足：
+sudo chmod 666 /dev/ttyDeviceLeft
+
+# 单独测试夹爪，测试完 Ctrl+C 退出；正式 diffusion 部署不需要单独开这个进程
+python start_gripper.py left --distance 0.05
 ```
+
+### 5. USB 故障监控（推荐）
+
+在复现相机/串口掉线问题前，先在宿主机启动 USB 监控脚本：
+
+```bash
+cd umi-arx
+sudo python3 scripts/monitor_usb_host.py \
+    --output-dir data_local/usb_monitor/$(date +%Y%m%d_%H%M%S)
+```
+
+脚本会自动记录：
+- `dmesg` / `journalctl -k` 内核日志变化
+- `/dev/ttyDevice*`、`/dev/ttyUSB*`、`/dev/video*`、`/dev/v4l/by-id/*` 等节点变化
+- 每次变化时的 `lsusb -t` 拓扑快照
 
 ---
 
@@ -137,31 +158,24 @@ sudo ip link set can1 up
 ip -details link show can1   # 确认 UP + ERROR-ACTIVE
 
 cd arx5-sdk
+export AMENT_PREFIX_PATH=$CONDA_PREFIX
+export LD_LIBRARY_PATH=$PWD/lib/x86_64:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 python python/communication/zmq_server.py L5_umi can1
 # 模型名根据实际机型：X5 / L5 / X5_umi / L5_umi
 # 默认端口 8765
 ```
 
-### Terminal 2 — Gen 夹爪 ROS 节点
+### Terminal 2 — Gen 夹爪 Python SDK 检查（可选）
 
 ```bash
-roscore &
+cd gen_con_sdk_python_release
+sudo chmod 666 /dev/ttyDeviceLeft
 
-cd gen_controller_sdk_release
-source devel/setup.bash
-
-# 只启动串口节点，不启动 camera_view_single（避免摄像头设备冲突）
-rosrun robot_driver databus_single.py \
-    _serial_port:=/dev/ttyDeviceLeft \
-    _topic_encoder:=encoder \
-    _topic_target_distance:=target_distance
+# 单独测试夹爪能否通信和运动。正式运行 diffusion 时不要保持这个进程占用串口。
+python start_gripper.py left --distance 0.05
 ```
 
-验证：
-```bash
-rostopic echo /encoder           # 应有 0.0 左右的值持续输出
-rostopic pub /target_distance std_msgs/Float32 "data: 0.05"  # 测试夹爪运动
-```
+正式运行 diffusion 时，夹爪由 Terminal 4 的 `eval_arx5.py` 内部通过 Python SDK 控制，不需要 `roscore`、`rosrun` 或 `rostopic`。
 
 ### Terminal 3 — Policy Inference Server（GPU 机器）
 
@@ -188,6 +202,7 @@ python scripts/eval_arx5.py \
     --policy_port 8766 \
     --frequency 8 \
     --steps_per_inference 12 \
+    --runtime_calibration config/arx5_runtime_calibration.yaml \
     --camera_reorder N     # N = gen夹爪中间摄像头的 index
 ```
 
@@ -213,30 +228,34 @@ python scripts/eval_arx5.py \
 ## 数据流（Policy 控制阶段）
 
 ```
-Gen夹爪中间摄像头 (1600x1296) -> resize 224x224 -> camera0_rgb
+Gen夹爪中间鱼眼相机 (640x480) -> resize 224x224 -> camera0_rgb
 ARX5 TCP Pose (6D) + gripper_width (1D)  x  obs_horizon=2
           ↓  get_real_umi_obs_dict()  (pose_repr=relative)
 obs_dict_np ──ZMQ──> detached_policy_inference.py (port 8766)
                               ↓ DDIM 16步推理
           raw_action: [steps=12, 10]  <──ZMQ──
-          ↓  get_real_umi_action()  (action_repr=relative)
+          ↓  get_camera_frame_umi_action()  (action_reference_frame=camera, action_repr=relative)
 action: [steps=12, 7]  =  [x,y,z, rx,ry,rz, gripper]
           ↓  Arx5Env.exec_actions()  dynamic_latency=True
 Arx5Controller.add_waypoint() -> 轨迹插值 @ 200Hz
           ├─ arx5-sdk ZMQ -> CAN -> ARX5机械臂
-          └─ ROS /target_distance -> USB串口 -> Gen夹爪
+          └─ Python SDK DataBus.set_target_distance() -> USB串口 -> Gen夹爪
 ```
 
 ---
 
-## ROS Topic 说明
+## Gen Python SDK 串口说明
 
-| Topic | 类型 | 方向 | 范围 | 说明 |
-|-------|------|------|------|------|
-| `/target_distance` | `std_msgs/Float32` | 写入 | [0.0, 0.103] m | 夹爪目标开口距离 |
-| `/encoder` | `std_msgs/Float32` | 读取 | [0.0, 0.103] m | 夹爪实际开口距离反馈 |
-| `/tactile/left` | `Int8MultiArray` | 读取 | — | 左侧触觉（部署不使用） |
-| `/tactile/right` | `Int8MultiArray` | 读取 | — | 右侧触觉（部署不使用） |
+| 接口 | 方向 | 范围 | 说明 |
+|------|------|------|------|
+| `DataBus.set_target_distance(value)` | 写入 | [0.0, 0.103] m | 夹爪目标开口距离 |
+| `encoder_callback(record_data)` | 读取 | [0.0, 0.103] m | 夹爪实际开口距离反馈，big-endian float |
+
+默认串口为 `/dev/ttyDeviceLeft`。如需覆盖：
+
+```bash
+export GEN_GRIPPER_SERIAL_PORT=/dev/ttyDeviceLeft
+```
 
 ---
 
@@ -253,8 +272,7 @@ sudo ip link set can1 up
 ### 摄像头打开失败 / 设备冲突
 ```bash
 sudo chmod 666 /dev/videoN
-# 如果 camera_view_single.py 在运行，先 kill 掉
-rosnode kill /camera
+# 如果 start_gripper.py 仍在运行，先 Ctrl+C 退出，避免占用 SDK 相机或串口
 ```
 
 ### Policy 报错 shape mismatch
@@ -264,9 +282,10 @@ rosnode kill /camera
 
 ### 夹爪无响应
 ```bash
-rostopic echo /encoder         # 确认有数据输出
 ls -la /dev/ttyDeviceLeft      # 确认设备映射正确
 sudo chmod 666 /dev/ttyDeviceLeft
+cd gen_con_sdk_python_release
+python start_gripper.py left --distance 0.05
 ```
 
 ### arx5-sdk 模型名报错
@@ -283,13 +302,13 @@ arx-difussion-deploy/
 ├── umi-arx/
 │   ├── scripts/eval_arx5.py                      # 主控脚本，部署入口
 │   ├── modules/arx5_env.py                       # 环境封装（摄像头+机械臂）
-│   ├── modules/arx5_controller.py                # ARX5控制器 + Gen夹爪ROS接口
+│   ├── modules/arx5_controller.py                # ARX5控制器 + Gen夹爪Python SDK接口
 │   └── modules/arx5_zmq_client.py                # ZMQ客户端
 ├── detached-umi-policy/
 │   └── detached_policy_inference.py              # Policy推理服务端
-├── gen_controller_sdk_release/
-│   ├── src/robot_driver/scripts/databus_single.py   # 夹爪串口ROS节点
-│   └── src/robot_driver/launch/single_gripper_start.launch
+├── gen_con_sdk_python_release/
+│   ├── start_gripper.py                          # 夹爪Python SDK测试入口
+│   └── scripts/databus.py                        # 夹爪串口DataBus
 ├── umi-diffusion-training/
 │   └── diffusion_policy/config/
 │       ├── train_diffusion_unet_timm_umi_workspace.yaml  # 训练配置

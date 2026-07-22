@@ -1,0 +1,29 @@
+# Large local data and checkpoints
+umi-deploy/data/
+umi-deploy/umi-arx/data_local/
+
+# ML artifacts
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.npz
+*.npy
+
+# Videos and generated media
+*.mp4
+*.avi
+*.mkv
+
+# Build/cache outputs
+build/
+devel/
+install/
+__pycache__/
+*.pyc
+.cache/
+
+# Local datasets and generated builds
+data/
+trained_ckpt/
+umi-deploy/arx5-sdk/build_current/

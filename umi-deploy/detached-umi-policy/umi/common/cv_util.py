@@ -44,6 +44,8 @@ def parse_fisheye_intrinsics(json_data: dict) -> Dict[str, np.ndarray]:
 
     # pinhole parameters
     f = intr_data['focal_length']
+    fx = intr_data.get('focal_length_x', f)
+    fy = intr_data.get('focal_length_y', f)
     px = intr_data['principal_pt_x']
     py = intr_data['principal_pt_y']
     
@@ -58,8 +60,8 @@ def parse_fisheye_intrinsics(json_data: dict) -> Dict[str, np.ndarray]:
     opencv_intr_dict = {
         'DIM': np.array([w, h], dtype=np.int64),
         'K': np.array([
-            [f, 0, px],
-            [0, f, py],
+            [fx, 0, px],
+            [0, fy, py],
             [0, 0, 1]
         ], dtype=np.float64),
         'D': np.array([kb8]).T
@@ -72,31 +74,20 @@ def convert_fisheye_intrinsics_resolution(
         target_resolution: Tuple[int, int]
         ) -> Dict[str, np.ndarray]:
     """
-    Convert fisheye intrinsics parameter to a different resolution,
-    assuming that images are not cropped in the vertical dimension,
-    and only symmetrically cropped/padded in horizontal dimension.
+    Return fisheye intrinsics only when the image resolution already matches.
+
+    UMI gripper fisheye intrinsics must not be scaled across UVC modes unless the
+    capture chain has been separately verified to preserve FOV/crop exactly.
     """
-    iw, ih = opencv_intr_dict['DIM']
-    iK = opencv_intr_dict['K']
-    ifx = iK[0,0]
-    ify = iK[1,1]
-    ipx = iK[0,2]
-    ipy = iK[1,2]
-
-    ow, oh = target_resolution
-    ofx = ifx / ih * oh
-    ofy = ify / ih * oh
-    opx = (ipx - (iw / 2)) / ih * oh + (ow / 2)
-    opy = ipy / ih * oh
-    oK = np.array([
-        [ofx, 0, opx],
-        [0, ofy, opy],
-        [0, 0, 1]
-    ], dtype=np.float64)
-
+    expected_resolution = tuple(int(value) for value in opencv_intr_dict['DIM'])
+    actual_resolution = tuple(int(value) for value in target_resolution)
+    if actual_resolution != expected_resolution:
+        raise ValueError(
+            f"Fisheye intrinsics resolution {expected_resolution[0]}x{expected_resolution[1]} "
+            f"does not match image resolution {actual_resolution[0]}x{actual_resolution[1]}. "
+            "Re-capture at the calibrated resolution or calibrate intrinsics for this resolution."
+        )
     out_intr_dict = copy.deepcopy(opencv_intr_dict)
-    out_intr_dict['DIM'] = np.array([ow, oh], dtype=np.int64)
-    out_intr_dict['K'] = oK
     return out_intr_dict
 
 

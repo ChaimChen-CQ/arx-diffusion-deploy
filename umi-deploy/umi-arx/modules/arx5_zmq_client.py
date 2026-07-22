@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Optional, Union, cast
 import zmq
 from enum import IntEnum, auto
@@ -20,11 +22,32 @@ CTRL_DT = 0.005
 GRIPPER_WIDTH = 0.08
 
 
+def normalize_pose6d(pose: npt.ArrayLike, name: str = "pose") -> npt.NDArray[np.float64]:
+    arr = np.asarray(pose, dtype=np.float64)
+    if arr.size != 6:
+        raise ValueError(f"{name} expected 6 elements, got shape {arr.shape}")
+    arr = np.ascontiguousarray(arr.reshape(6))
+    if not np.all(np.isfinite(arr)):
+        raise ValueError(f"{name} contains NaN/Inf: {arr}")
+    return arr
+
+
+def normalize_joint6(joint_pos: npt.ArrayLike, name: str = "joint_pos") -> npt.NDArray[np.float64]:
+    arr = np.asarray(joint_pos, dtype=np.float64)
+    if arr.size != 6:
+        raise ValueError(f"{name} expected 6 elements, got shape {arr.shape}")
+    arr = np.ascontiguousarray(arr.reshape(6))
+    if not np.all(np.isfinite(arr)):
+        raise ValueError(f"{name} contains NaN/Inf: {arr}")
+    return arr
+
+
 def rotm2rotvec(R: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Convert rotation matrix to rotation vector
     """
-    theta = np.arccos((np.trace(R) - 1) / 2)
+    cos_theta = np.clip((np.trace(R) - 1) / 2, -1.0, 1.0)
+    theta = np.arccos(cos_theta)
     if np.isclose(theta, 0):
         return np.zeros(3)
     else:
@@ -101,40 +124,29 @@ def rotm2rpy(R: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 
 def ee2tcp(ee_pose: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Convert SDK eef pose to the runtime pose convention.
+
+    The L5_umi URDF now defines ``eef_link`` at ``das_base_link``. Runtime code
+    still uses the historical names ``tcp_pose`` / ``ActualTCPPose``, but those
+    poses are now das_base_link poses with rotation stored as a rotvec. The SDK
+    reports eef orientation as RPY, so this function only changes orientation
+    representation and does not apply the old ARX EE->TCP fixed rotation.
+    """
+    ee_pose = normalize_pose6d(ee_pose, "ee_pose")
     ee_cartesian = ee_pose[:3]
     ee_rpy = ee_pose[3:]
     ee_rot_mat = rpy2rotm(ee_rpy)
-    ee2tcp_rot_mat = np.array(
-        [
-            [0, 0, 1],
-            [-1, 0, 0],
-            [0, -1, 0],
-        ]
-    )
-    tcp_rot_mat = ee_rot_mat @ ee2tcp_rot_mat
-    tcp_rotvec = rotm2rotvec(tcp_rot_mat)
-    # opposite the rotation vector but keep the same pose
-    angle_rad = np.linalg.norm(tcp_rotvec)
-    vec = tcp_rotvec / angle_rad
-    alternate_angle_rad = 2 * np.pi - angle_rad
-    tcp_rotvec = -vec * alternate_angle_rad
-
+    tcp_rotvec = rotm2rotvec(ee_rot_mat)
     return np.concatenate([ee_cartesian, tcp_rotvec])
 
 
 def tcp2ee(tcp_pose: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    """Convert runtime das_base_link rotvec pose to SDK eef RPY pose."""
+    tcp_pose = normalize_pose6d(tcp_pose, "tcp_pose")
     tcp_cartesian = tcp_pose[:3]
     tcp_rotvec = tcp_pose[3:]
     tcp_rot_mat = rotvec2rotm(tcp_rotvec)
-    tcp2ee_rot_mat = np.array(
-        [
-            [0, -1, 0],
-            [0, 0, -1],
-            [1, 0, 0],
-        ]
-    )
-    ee_rot_mat = tcp_rot_mat @ tcp2ee_rot_mat
-    ee_rpy = rotm2rpy(ee_rot_mat)
+    ee_rpy = rotm2rpy(tcp_rot_mat)
     return np.concatenate([tcp_cartesian, ee_rpy])
 
 
@@ -189,6 +201,7 @@ class Arx5Client:
     def set_ee_pose(
         self, pose_6d: npt.NDArray[np.float64], gripper_pos: Union[float, None] = None
     ):
+        pose_6d = normalize_pose6d(pose_6d, "ee_pose")
         reply_msg = self.send_recv(
             {
                 "cmd": "SET_EE_POSE",
@@ -211,14 +224,54 @@ class Arx5Client:
         tcp_pose_6d: npt.NDArray[np.float64],
         gripper_pos: Union[float, None] = None,
     ):
+        tcp_pose_6d = normalize_pose6d(tcp_pose_6d, "tcp_pose")
         ee_pose = tcp2ee(tcp_pose_6d)
         return self.set_ee_pose(ee_pose, gripper_pos)
+
+    def set_joint_pos(
+        self,
+        joint_pos: npt.ArrayLike,
+        gripper_pos: Union[float, None] = None,
+        duration: float = 0.15,
+        max_joint_step_rad: float = 0.05,
+    ):
+        joint_pos = normalize_joint6(joint_pos)
+        reply_msg = self.send_recv(
+            {
+                "cmd": "SET_JOINT_POS",
+                "data": {
+                    "joint_pos": joint_pos,
+                    "gripper_pos": gripper_pos,
+                    "duration": float(duration),
+                    "max_joint_step_rad": float(max_joint_step_rad),
+                },
+            }
+        )
+        assert reply_msg["cmd"] == "SET_JOINT_POS"
+        if reply_msg["data"] == "KeyboardInterrupt" or reply_msg["data"] == "ZMQError":
+            return self.latest_state
+        if type(reply_msg["data"]) != dict:
+            raise ValueError(f"Error: {reply_msg['data']}")
+        state = cast(
+            dict[str, Union[npt.NDArray[np.float64], float]], reply_msg["data"]
+        )
+        self.latest_state = state
+        return state
 
     def reset_to_home(self):
         reply_msg = self.send_recv({"cmd": "RESET_TO_HOME", "data": None})
         assert reply_msg["cmd"] == "RESET_TO_HOME"
         if reply_msg["data"] != "OK":
             raise ValueError(f"Error: {reply_msg['data']}")
+        self.get_state()
+
+    # [NEW] Bumpless transfer: hold at current physical pose, no motion
+    def hold_current_pose(self):
+        reply_msg = self.send_recv({"cmd": "HOLD_CURRENT_POSE", "data": None})
+        assert reply_msg["cmd"] == "HOLD_CURRENT_POSE"
+        if not isinstance(reply_msg["data"], dict):
+            raise ValueError(f"Error: {reply_msg['data']}")
+        # Sync local state cache
         self.get_state()
 
     def set_to_damping(self):
@@ -255,6 +308,11 @@ class Arx5Client:
     def joint_pos(self):
         joint_pos = self.latest_state["joint_pos"]
         return cast(npt.NDArray[np.float64], joint_pos)
+
+    @property
+    def joint_cmd_pos(self):
+        joint_cmd_pos = self.latest_state.get("joint_cmd_pos", self.latest_state["joint_pos"])
+        return cast(npt.NDArray[np.float64], joint_cmd_pos)
 
     @property
     def joint_vel(self):

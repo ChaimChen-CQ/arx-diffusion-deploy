@@ -10,7 +10,7 @@ import numpy as np
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
-from arx5_interface import Arx5CartesianController, EEFState, Gain, LogLevel
+from arx5_interface import Arx5CartesianController, ControllerConfigFactory, EEFState, Gain, LogLevel, RobotConfigFactory
 from multiprocessing.managers import SharedMemoryManager
 
 import time
@@ -103,6 +103,8 @@ def start_keyboard_teleop(controller: Arx5CartesianController):
     directions = np.zeros(6, dtype=np.float64)
     start_time = time.monotonic()
     loop_cnt = 0
+    last_sent_pose_6d = target_pose_6d.copy()
+    last_sent_gripper_pos = target_gripper_pos
     while True:
         eef_state = controller.get_eef_state()
         print(
@@ -131,6 +133,12 @@ def start_keyboard_teleop(controller: Arx5CartesianController):
         else:
             gripper_cmd = 0
 
+        if not np.any(state) and gripper_cmd == 0:
+            loop_cnt += 1
+            while time.monotonic() < start_time + loop_cnt * cmd_dt:
+                pass
+            continue
+
         target_pose_6d[:3] += state[:3] * pos_speed * cmd_dt
         target_pose_6d[3:] += state[3:] * ori_speed * cmd_dt
         target_gripper_pos += gripper_cmd * gripper_speed * cmd_dt
@@ -147,14 +155,25 @@ def start_keyboard_teleop(controller: Arx5CartesianController):
         eef_cmd.pose_6d()[:] = target_pose_6d
         eef_cmd.gripper_pos = target_gripper_pos
         eef_cmd.timestamp = current_timestamp + preview_time
-        controller.set_eef_cmd(eef_cmd)
+        if (
+            np.linalg.norm(target_pose_6d - last_sent_pose_6d) > 1e-6
+            or abs(target_gripper_pos - last_sent_gripper_pos) > 1e-6
+        ):
+            controller.set_eef_cmd(eef_cmd)
+            last_sent_pose_6d = target_pose_6d.copy()
+            last_sent_gripper_pos = target_gripper_pos
 
 
 @click.command()
 @click.argument("model")  # ARX arm model: X5 or L5
 @click.argument("interface")  # can bus name (can0 etc.)
 def main(model: str, interface: str):
-    controller = Arx5CartesianController(model, interface)
+    robot_config = RobotConfigFactory.get_instance().get_config(model)
+    controller_config = ControllerConfigFactory.get_instance().get_config(
+        "cartesian_controller", robot_config.joint_dof
+    )
+    controller_config.gravity_compensation = False
+    controller = Arx5CartesianController(robot_config, controller_config, interface)
     controller.reset_to_home()
 
     robot_config = controller.get_robot_config()

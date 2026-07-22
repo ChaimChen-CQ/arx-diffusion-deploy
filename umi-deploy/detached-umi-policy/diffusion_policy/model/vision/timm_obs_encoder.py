@@ -14,6 +14,20 @@ from diffusion_policy.common.pytorch_util import replace_submodules
 
 logger = logging.getLogger(__name__)
 
+
+# torchvision v1 transforms that inject randomness and do NOT honor model.eval().
+# Used to strip augmentation from the deterministic eval pipeline. GaussianBlur
+# is stochastic when given a sigma range; ColorJitter always samples factors.
+_STOCHASTIC_TRANSFORM_NAMES = (
+    'ColorJitter', 'GaussianBlur',
+)
+
+def _is_stochastic_transform(tf) -> bool:
+    """True if `tf` samples randomness per-call (so it must be dropped at eval)."""
+    name = type(tf).__name__
+    return name.startswith('Random') or name in _STOCHASTIC_TRANSFORM_NAMES
+
+
 class AttentionPool2d(nn.Module):
     def __init__(self, spacial_dim: int, embed_dim: int, num_heads: int, output_dim: int = None):
         super().__init__()
@@ -68,6 +82,12 @@ class TimmObsEncoder(ModuleAttrMixin):
             feature_aggregation: str='spatial_embedding',
             downsample_ratio: int=32,
             position_encording: str='learnable',
+            # override the input image size expected by the backbone
+            # (e.g. DINOv2 defaults to 518, set to 224 for standard datasets)
+            img_size: int=None,
+            # Opt in to the LeRobot/DiT deployment preprocessing. Disabled by
+            # default to preserve the historical U-Net deployment behavior.
+            lerobot_deploy: bool=False,
 
         ):
         """
@@ -80,15 +100,30 @@ class TimmObsEncoder(ModuleAttrMixin):
         low_dim_keys = list()
         key_model_map = nn.ModuleDict()
         key_transform_map = nn.ModuleDict()
+        key_eval_transform_map = nn.ModuleDict()
         key_shape_map = dict()
 
         assert global_pool == ''
-        model = timm.create_model(
+        timm_kwargs = dict(
             model_name=model_name,
             pretrained=pretrained,
-            global_pool=global_pool, # '' means no pooling
-            num_classes=0            # remove classification layer
+            global_pool=global_pool,  # '' means no pooling
+            num_classes=0,            # remove classification layer
         )
+        if img_size is not None:
+            timm_kwargs['img_size'] = img_size
+        model = timm.create_model(**timm_kwargs)
+
+        # Resolve the backbone's own input normalization. DINOv3 does not use
+        # the generic ImageNet defaults, so use timm's per-model data config.
+        img_norm_mean = None
+        img_norm_std = None
+        if lerobot_deploy and imagenet_norm:
+            from timm.data import resolve_model_data_config
+            data_cfg = resolve_model_data_config(model)
+            img_norm_mean = tuple(data_cfg['mean'])
+            img_norm_std = tuple(data_cfg['std'])
+            print(f'obs encoder input norm: mean={img_norm_mean}, std={img_norm_std}')
 
         if frozen:
             assert pretrained
@@ -136,14 +171,34 @@ class TimmObsEncoder(ModuleAttrMixin):
             if type == 'rgb':
                 assert image_shape is None or image_shape == shape[1:]
                 image_shape = shape[1:]
+        eval_transforms = None
         if transforms is not None and not isinstance(transforms[0], torch.nn.Module):
             assert transforms[0].type == 'RandomCrop'
             ratio = transforms[0].ratio
+            crop_size = int(image_shape[0] * ratio)
             transforms = [
-                torchvision.transforms.RandomCrop(size=int(image_shape[0] * ratio)),
+                torchvision.transforms.RandomCrop(size=crop_size),
                 torchvision.transforms.Resize(size=image_shape[0], antialias=True)
             ] + transforms[1:]
+            if lerobot_deploy:
+                eval_transforms = [
+                    torchvision.transforms.CenterCrop(size=crop_size),
+                    torchvision.transforms.Resize(size=image_shape[0], antialias=True)
+                ] + [t for t in transforms[2:] if not _is_stochastic_transform(t)]
+        elif lerobot_deploy and transforms is not None:
+            eval_transforms = [t for t in transforms if not _is_stochastic_transform(t)]
+
+        if lerobot_deploy and imagenet_norm:
+            norm_tf = torchvision.transforms.Normalize(mean=img_norm_mean, std=img_norm_std)
+            transforms = ([norm_tf] if transforms is None else list(transforms) + [norm_tf])
+            eval_transforms = ([norm_tf] if eval_transforms is None
+                               else list(eval_transforms) + [norm_tf])
+
+        if eval_transforms is None:
+            eval_transforms = transforms
         transform = nn.Identity() if transforms is None else torch.nn.Sequential(*transforms)
+        eval_transform = (nn.Identity() if eval_transforms is None
+                          else torch.nn.Sequential(*eval_transforms))
 
         for key, attr in obs_shape_meta.items():
             shape = tuple(attr['shape'])
@@ -157,6 +212,7 @@ class TimmObsEncoder(ModuleAttrMixin):
 
                 this_transform = transform
                 key_transform_map[key] = this_transform
+                key_eval_transform_map[key] = eval_transform
             elif type == 'low_dim':
                 if not attr.get('ignore_by_policy', False):
                     low_dim_keys.append(key)
@@ -174,6 +230,8 @@ class TimmObsEncoder(ModuleAttrMixin):
         self.shape_meta = shape_meta
         self.key_model_map = key_model_map
         self.key_transform_map = key_transform_map
+        self.key_eval_transform_map = key_eval_transform_map
+        self.lerobot_deploy = lerobot_deploy
         self.share_rgb_model = share_rgb_model
         self.rgb_keys = rgb_keys
         self.low_dim_keys = low_dim_keys
@@ -263,7 +321,12 @@ class TimmObsEncoder(ModuleAttrMixin):
             assert B == batch_size
             assert img.shape[2:] == self.key_shape_map[key]
             img = img.reshape(B*T, *img.shape[2:])
-            img = self.key_transform_map[key](img)
+            tf_map = (
+                self.key_eval_transform_map
+                if self.lerobot_deploy and not self.training
+                else self.key_transform_map
+            )
+            img = tf_map[key](img)
             raw_feature = self.key_model_map[key](img)
             feature = self.aggregate_feature(raw_feature)
             assert len(feature.shape) == 2 and feature.shape[0] == B * T

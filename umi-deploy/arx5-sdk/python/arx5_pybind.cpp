@@ -9,13 +9,15 @@
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
 namespace py = pybind11;
 using namespace arx;
 using Pose6d = Eigen::Matrix<double, 6, 1>;
 using VecDoF = Eigen::VectorXd;
+
 PYBIND11_MODULE(arx5_interface, m)
 {
-    py::enum_<spdlog::level::level_enum>(m, "LogLevel")
+    py::enum_<spdlog::level::level_enum>(m, "LogLevel", py::module_local())
         .value("TRACE", spdlog::level::level_enum::trace)
         .value("DEBUG", spdlog::level::level_enum::debug)
         .value("INFO", spdlog::level::level_enum::info)
@@ -83,6 +85,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def(py::init<RobotConfig, ControllerConfig, const std::string &>())
         .def("set_eef_cmd", &Arx5CartesianController::set_eef_cmd)
         .def("set_eef_traj", &Arx5CartesianController::set_eef_traj)
+        .def("set_joint_cmd", &Arx5CartesianController::set_joint_cmd)
         .def("get_joint_cmd", &Arx5CartesianController::get_joint_cmd)
         .def("get_eef_cmd", &Arx5CartesianController::get_eef_cmd)
         .def("get_eef_state", &Arx5CartesianController::get_eef_state)

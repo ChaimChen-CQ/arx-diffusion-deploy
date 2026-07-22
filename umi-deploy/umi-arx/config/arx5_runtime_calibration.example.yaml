@@ -1,0 +1,53 @@
+# Optional runtime calibration for umi-arx/scripts/eval_arx5.py.
+#
+# The obs path applies:
+#   T_policy_tcp = T_policy_frame_from_arx_base @ T_arx_tcp @ T_policy_tcp_from_arx_tcp
+#
+# Set action_reference_frame to camera when the policy predicts target/delta poses
+# in the wrist camera frame. In that mode the action path applies:
+#   T_base_camera = T_base_arx_tcp @ T_arx_tcp_camera
+#   T_base_policy_tcp_target = T_base_camera @ T_camera_policy_tcp_target
+#   T_base_arx_tcp_target = T_base_policy_tcp_target @ inv(T_arx_tcp_policy_tcp)
+#
+# Use tx_policy_frame_from_arx_base when you want to map ARX5 base poses into the
+# policy training world/tag frame. Existing legacy robot_world_hand_eye.json files
+# can also be loaded directly because eval_arx5.py accepts tx_base2world/tx_world2base
+# as aliases for the same global transform.
+action_reference_frame: camera
+
+tx_policy_frame_from_arx_base:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0.0]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# T_arx_tcp_camera from robot-world-hand-eye. OpenCV's legacy tx_gripper2camera
+# is T_camera_arx_tcp, so eval_arx5.py uses inv(tx_gripper2camera) when only
+# that legacy key is present.
+tx_arx_tcp_camera:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0.0]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# T_camera_policy_tcp from 06_generate_dataset_plan.py / tx_cam_tcp.
+tx_camera_policy_tcp:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0.0]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# Optional explicit value. If omitted, eval_arx5.py derives it as:
+#   tx_arx_tcp_camera @ tx_camera_policy_tcp
+tx_policy_tcp_from_arx_tcp:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0.0]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# Kept for inspection and accepted as T_arx_tcp_camera if tx_arx_tcp_camera is absent.
+# tx_gripper2camera:
+#   - [1.0, 0.0, 0.0, 0.0]
+#   - [0.0, 1.0, 0.0, 0.0]
+#   - [0.0, 0.0, 1.0, 0.0]
+#   - [0.0, 0.0, 0.0, 1.0]

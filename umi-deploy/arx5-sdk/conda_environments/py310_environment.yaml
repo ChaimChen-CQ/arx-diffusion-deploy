@@ -1,4 +1,4 @@
-name: arx-nyx-py310
+name: arx-py310
 channels:
   - robostack-staging
   - conda-forge

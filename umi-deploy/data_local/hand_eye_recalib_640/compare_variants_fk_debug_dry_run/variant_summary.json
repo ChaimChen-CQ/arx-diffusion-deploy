@@ -1,0 +1,557 @@
+{
+  "variants": [
+    {
+      "variant_name": "raw_all",
+      "detection_mode": "raw",
+      "distance_filter": "all",
+      "pose_source": "tcp_pose",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 16,
+      "samples_used_val": 7,
+      "excluded_by_distance": 0,
+      "excluded_by_reprojection": 5,
+      "runtime_safe": true,
+      "comparison_only": false,
+      "status": "ok",
+      "train_translation": {
+        "mean": 25.76279531202865,
+        "median": 22.643956175383813,
+        "rms": 27.293118822647553,
+        "max": 43.52222307584357
+      },
+      "val_translation": {
+        "mean": 26.680255588861087,
+        "median": 26.155387555708305,
+        "rms": 29.852978014792278,
+        "max": 44.47766178384717
+      },
+      "train_rotation": {
+        "mean": 4.500558482494687,
+        "median": 4.119093467939111,
+        "rms": 4.991276501684543,
+        "max": 10.14858196902184
+      },
+      "val_rotation": {
+        "mean": 4.78972299697666,
+        "median": 4.764511182211238,
+        "rms": 5.109043038712437,
+        "max": 7.90129262222753
+      },
+      "offsets_deg": null,
+      "hand_eye_json": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/compare_variants_fk_debug_dry_run/raw_all.json",
+      "used_train_samples": [
+        {
+          "idx": 3,
+          "z_mm": 188.81490645426805,
+          "norm_mm": 197.47397637171082,
+          "reprojection_mean_px": 3.2522148548646226
+        },
+        {
+          "idx": 4,
+          "z_mm": 220.1796054245509,
+          "norm_mm": 221.3136791759291,
+          "reprojection_mean_px": 2.869071350702369
+        },
+        {
+          "idx": 6,
+          "z_mm": 241.27425919062551,
+          "norm_mm": 251.04252072107596,
+          "reprojection_mean_px": 3.488378446851235
+        },
+        {
+          "idx": 7,
+          "z_mm": 236.36566239418337,
+          "norm_mm": 251.7308251519027,
+          "reprojection_mean_px": 3.1561191953811525
+        },
+        {
+          "idx": 8,
+          "z_mm": 243.525859216079,
+          "norm_mm": 247.7410277164905,
+          "reprojection_mean_px": 2.04493109329519
+        },
+        {
+          "idx": 9,
+          "z_mm": 277.86602048471036,
+          "norm_mm": 301.7044297167431,
+          "reprojection_mean_px": 2.6150504600240914
+        },
+        {
+          "idx": 11,
+          "z_mm": 241.02814436547519,
+          "norm_mm": 263.0510295294787,
+          "reprojection_mean_px": 2.4962407066330483
+        },
+        {
+          "idx": 15,
+          "z_mm": 230.76379893266804,
+          "norm_mm": 231.8140509344038,
+          "reprojection_mean_px": 1.2463126679681678
+        },
+        {
+          "idx": 16,
+          "z_mm": 165.64193202282905,
+          "norm_mm": 172.73994275581813,
+          "reprojection_mean_px": 3.0778795202727003
+        },
+        {
+          "idx": 17,
+          "z_mm": 270.5227648295328,
+          "norm_mm": 284.5910768881916,
+          "reprojection_mean_px": 2.2498057140600567
+        },
+        {
+          "idx": 18,
+          "z_mm": 212.07427972776432,
+          "norm_mm": 217.89627955894565,
+          "reprojection_mean_px": 2.369710607047461
+        },
+        {
+          "idx": 19,
+          "z_mm": 242.69857130774344,
+          "norm_mm": 243.46212350047998,
+          "reprojection_mean_px": 2.4357531579488674
+        },
+        {
+          "idx": 20,
+          "z_mm": 177.4862907950073,
+          "norm_mm": 185.72634567426235,
+          "reprojection_mean_px": 3.0913039643394478
+        },
+        {
+          "idx": 23,
+          "z_mm": 197.37583738717896,
+          "norm_mm": 205.1457967167837,
+          "reprojection_mean_px": 2.9240809333810995
+        },
+        {
+          "idx": 24,
+          "z_mm": 246.55506397387862,
+          "norm_mm": 261.196983785889,
+          "reprojection_mean_px": 2.223506921185743
+        },
+        {
+          "idx": 27,
+          "z_mm": 216.25699463916445,
+          "norm_mm": 221.71448930121028,
+          "reprojection_mean_px": 0.3342873719313765
+        }
+      ],
+      "used_val_samples": [
+        {
+          "idx": 0,
+          "z_mm": 233.56558464383207,
+          "norm_mm": 234.44615418906326,
+          "reprojection_mean_px": 1.5082750095241924
+        },
+        {
+          "idx": 1,
+          "z_mm": 184.09257751468334,
+          "norm_mm": 210.03233463993809,
+          "reprojection_mean_px": 3.2770081090638974
+        },
+        {
+          "idx": 5,
+          "z_mm": 248.43183621981183,
+          "norm_mm": 250.84252408241775,
+          "reprojection_mean_px": 2.691359168763495
+        },
+        {
+          "idx": 10,
+          "z_mm": 195.34586664993697,
+          "norm_mm": 221.76455232350418,
+          "reprojection_mean_px": 3.055388483478177
+        },
+        {
+          "idx": 21,
+          "z_mm": 249.56419018507233,
+          "norm_mm": 251.57437169374114,
+          "reprojection_mean_px": 2.466644785729494
+        },
+        {
+          "idx": 22,
+          "z_mm": 213.4728561300964,
+          "norm_mm": 219.7858019267077,
+          "reprojection_mean_px": 2.12925899575314
+        },
+        {
+          "idx": 26,
+          "z_mm": 173.87891101539142,
+          "norm_mm": 174.2565750406184,
+          "reprojection_mean_px": 3.6564157390355376
+        }
+      ],
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "not selected"
+    },
+    {
+      "variant_name": "raw_250_350",
+      "detection_mode": "raw",
+      "distance_filter": "250_350",
+      "pose_source": "tcp_pose",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 6,
+      "samples_used_val": 2,
+      "excluded_by_distance": 20,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": true,
+      "comparison_only": false,
+      "status": "ok",
+      "train_translation": {
+        "mean": 19.07288256305777,
+        "median": 21.229908779677668,
+        "rms": 20.186589268770007,
+        "max": 26.449138742987675
+      },
+      "val_translation": {
+        "mean": 24.832421952869673,
+        "median": 24.832421952869673,
+        "rms": 25.00790175434584,
+        "max": 27.78978059017595
+      },
+      "train_rotation": {
+        "mean": 5.075156699343748,
+        "median": 4.898021485764021,
+        "rms": 5.651069604845265,
+        "max": 8.756813326459472
+      },
+      "val_rotation": {
+        "mean": 3.2124951477678287,
+        "median": 3.2124951477678287,
+        "rms": 3.2354432191051976,
+        "max": 3.5971609112846252
+      },
+      "offsets_deg": null,
+      "hand_eye_json": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/compare_variants_fk_debug_dry_run/raw_250_350.json",
+      "used_train_samples": [
+        {
+          "idx": 6,
+          "z_mm": 241.27425919062551,
+          "norm_mm": 251.04252072107596,
+          "reprojection_mean_px": 3.488378446851235
+        },
+        {
+          "idx": 7,
+          "z_mm": 236.36566239418337,
+          "norm_mm": 251.7308251519027,
+          "reprojection_mean_px": 3.1561191953811525
+        },
+        {
+          "idx": 9,
+          "z_mm": 277.86602048471036,
+          "norm_mm": 301.7044297167431,
+          "reprojection_mean_px": 2.6150504600240914
+        },
+        {
+          "idx": 11,
+          "z_mm": 241.02814436547519,
+          "norm_mm": 263.0510295294787,
+          "reprojection_mean_px": 2.4962407066330483
+        },
+        {
+          "idx": 17,
+          "z_mm": 270.5227648295328,
+          "norm_mm": 284.5910768881916,
+          "reprojection_mean_px": 2.2498057140600567
+        },
+        {
+          "idx": 24,
+          "z_mm": 246.55506397387862,
+          "norm_mm": 261.196983785889,
+          "reprojection_mean_px": 2.223506921185743
+        }
+      ],
+      "used_val_samples": [
+        {
+          "idx": 5,
+          "z_mm": 248.43183621981183,
+          "norm_mm": 250.84252408241775,
+          "reprojection_mean_px": 2.691359168763495
+        },
+        {
+          "idx": 21,
+          "z_mm": 249.56419018507233,
+          "norm_mm": 251.57437169374114,
+          "reprojection_mean_px": 2.466644785729494
+        }
+      ],
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "validation sample count is too small"
+    },
+    {
+      "variant_name": "raw_300_350",
+      "detection_mode": "raw",
+      "distance_filter": "300_350",
+      "pose_source": "tcp_pose",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 1,
+      "samples_used_val": 0,
+      "excluded_by_distance": 27,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": true,
+      "comparison_only": false,
+      "status": "skipped",
+      "reason": "fewer than 3 training samples after filtering",
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "fewer than 3 training samples after filtering"
+    },
+    {
+      "variant_name": "rectified_250_350",
+      "detection_mode": "rectified",
+      "distance_filter": "250_350",
+      "pose_source": "tcp_pose",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 6,
+      "samples_used_val": 2,
+      "excluded_by_distance": 20,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": true,
+      "comparison_only": true,
+      "status": "ok",
+      "train_translation": {
+        "mean": 19.205056589092944,
+        "median": 21.535174681366744,
+        "rms": 20.54577418306211,
+        "max": 28.575575217160637
+      },
+      "val_translation": {
+        "mean": 26.621443972356598,
+        "median": 26.621443972356598,
+        "rms": 26.648924749759303,
+        "max": 27.831365930588795
+      },
+      "train_rotation": {
+        "mean": 5.07717826221233,
+        "median": 4.938343082868511,
+        "rms": 5.617311391461162,
+        "max": 8.622620672082327
+      },
+      "val_rotation": {
+        "mean": 3.290021568081225,
+        "median": 3.290021568081225,
+        "rms": 3.3273978426668083,
+        "max": 3.7873489099236823
+      },
+      "offsets_deg": null,
+      "hand_eye_json": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/compare_variants_fk_debug_dry_run/rectified_250_350.json",
+      "used_train_samples": [
+        {
+          "idx": 6,
+          "z_mm": 241.52447576068008,
+          "norm_mm": 251.38430835908588,
+          "reprojection_mean_px": 2.1799854062272215
+        },
+        {
+          "idx": 7,
+          "z_mm": 236.69344822739757,
+          "norm_mm": 251.9532575836293,
+          "reprojection_mean_px": 2.001272910298228
+        },
+        {
+          "idx": 9,
+          "z_mm": 277.85725686788976,
+          "norm_mm": 301.62190998278385,
+          "reprojection_mean_px": 1.8319358943456765
+        },
+        {
+          "idx": 11,
+          "z_mm": 241.23426166165532,
+          "norm_mm": 263.27650579676083,
+          "reprojection_mean_px": 1.5680207590139599
+        },
+        {
+          "idx": 17,
+          "z_mm": 270.9476069613999,
+          "norm_mm": 285.0935499346382,
+          "reprojection_mean_px": 1.286124359469836
+        },
+        {
+          "idx": 24,
+          "z_mm": 246.53119481401893,
+          "norm_mm": 261.1219098797887,
+          "reprojection_mean_px": 1.4290993409587545
+        }
+      ],
+      "used_val_samples": [
+        {
+          "idx": 5,
+          "z_mm": 248.5116978845257,
+          "norm_mm": 250.91278763660173,
+          "reprojection_mean_px": 1.5963411860792855
+        },
+        {
+          "idx": 21,
+          "z_mm": 249.53674855004536,
+          "norm_mm": 251.53866750335186,
+          "reprojection_mean_px": 1.3440057878955565
+        }
+      ],
+      "comparison_warning": "Rectified is a comparison variant. Lower reprojection alone is not enough; use validation hand-eye residual.",
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "validation sample count is too small"
+    },
+    {
+      "variant_name": "rectified_300_350",
+      "detection_mode": "rectified",
+      "distance_filter": "300_350",
+      "pose_source": "tcp_pose",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 1,
+      "samples_used_val": 0,
+      "excluded_by_distance": 27,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": true,
+      "comparison_only": true,
+      "status": "skipped",
+      "reason": "fewer than 3 training samples after filtering",
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "fewer than 3 training samples after filtering"
+    },
+    {
+      "variant_name": "offset_300_350_bound5",
+      "detection_mode": "raw",
+      "distance_filter": "300_350",
+      "pose_source": "joint_state_corrected_fk",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 1,
+      "samples_used_val": 0,
+      "excluded_by_distance": 27,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": false,
+      "comparison_only": false,
+      "status": "skipped",
+      "reason": "fewer than 3 training samples after filtering",
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "fewer than 3 training samples after filtering"
+    },
+    {
+      "variant_name": "offset_250_350_bound5",
+      "detection_mode": "raw",
+      "distance_filter": "250_350",
+      "pose_source": "joint_state_corrected_fk",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 6,
+      "samples_used_val": 2,
+      "excluded_by_distance": 20,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": false,
+      "comparison_only": false,
+      "offset_optimization_success": false,
+      "offset_optimization_objective": 10.405564384227882,
+      "status": "ok",
+      "train_translation": {
+        "mean": 10.256310353200087,
+        "median": 9.966526936346243,
+        "rms": 10.405564384227882,
+        "max": 13.1725051606949
+      },
+      "val_translation": {
+        "mean": 16.78721247556655,
+        "median": 16.78721247556655,
+        "rms": 16.837545348980395,
+        "max": 18.088147016254155
+      },
+      "train_rotation": {
+        "mean": 3.576734638690701,
+        "median": 3.889007188430649,
+        "rms": 3.8193842133168054,
+        "max": 5.215930991764839
+      },
+      "val_rotation": {
+        "mean": 3.9319472129052615,
+        "median": 3.9319472129052615,
+        "rms": 4.311503016381285,
+        "max": 5.700802598512424
+      },
+      "offsets_deg": [
+        0.001807,
+        5.0,
+        -1.410417,
+        -4.22753,
+        4.045733,
+        0.000551
+      ],
+      "hand_eye_json": "/home/yd/program/nyx/arx-difussion-deploy/umi-deploy/data_local/hand_eye_recalib_640/compare_variants_fk_debug_dry_run/offset_250_350_bound5.json",
+      "used_train_samples": [
+        {
+          "idx": 6,
+          "z_mm": 241.27425919062551,
+          "norm_mm": 251.04252072107596,
+          "reprojection_mean_px": 3.488378446851235
+        },
+        {
+          "idx": 7,
+          "z_mm": 236.36566239418337,
+          "norm_mm": 251.7308251519027,
+          "reprojection_mean_px": 3.1561191953811525
+        },
+        {
+          "idx": 9,
+          "z_mm": 277.86602048471036,
+          "norm_mm": 301.7044297167431,
+          "reprojection_mean_px": 2.6150504600240914
+        },
+        {
+          "idx": 11,
+          "z_mm": 241.02814436547519,
+          "norm_mm": 263.0510295294787,
+          "reprojection_mean_px": 2.4962407066330483
+        },
+        {
+          "idx": 17,
+          "z_mm": 270.5227648295328,
+          "norm_mm": 284.5910768881916,
+          "reprojection_mean_px": 2.2498057140600567
+        },
+        {
+          "idx": 24,
+          "z_mm": 246.55506397387862,
+          "norm_mm": 261.196983785889,
+          "reprojection_mean_px": 2.223506921185743
+        }
+      ],
+      "used_val_samples": [
+        {
+          "idx": 5,
+          "z_mm": 248.43183621981183,
+          "norm_mm": 250.84252408241775,
+          "reprojection_mean_px": 2.691359168763495
+        },
+        {
+          "idx": 21,
+          "z_mm": 249.56419018507233,
+          "norm_mm": 251.57437169374114,
+          "reprojection_mean_px": 2.466644785729494
+        }
+      ],
+      "diagnostic_warning": "NOT RUNTIME SAFE unless runtime applies the same corrected FK. Do not write these offsets to motor zero or runtime config from this script.",
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "diagnostic virtual joint offset variant; runtime TCP frame would not match"
+    },
+    {
+      "variant_name": "rectified_offset_300_350_bound5",
+      "detection_mode": "rectified",
+      "distance_filter": "300_350",
+      "pose_source": "joint_state_corrected_fk",
+      "samples_total": 28,
+      "samples_with_tag": 28,
+      "samples_used_train": 1,
+      "samples_used_val": 0,
+      "excluded_by_distance": 27,
+      "excluded_by_reprojection": 0,
+      "runtime_safe": false,
+      "comparison_only": true,
+      "status": "skipped",
+      "reason": "fewer than 3 training samples after filtering",
+      "recommended_for_runtime": false,
+      "not_recommended_reason": "fewer than 3 training samples after filtering"
+    }
+  ]
+}

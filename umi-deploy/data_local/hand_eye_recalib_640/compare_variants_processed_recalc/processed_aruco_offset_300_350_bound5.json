@@ -1,0 +1,84 @@
+{
+  "tx_base2world": [
+    [
+      0.03913248930740029,
+      -0.9990592072018708,
+      -0.01869087439835538,
+      0.034969810441695726
+    ],
+    [
+      0.9988672393608634,
+      0.03860450776821693,
+      0.027819599414463214,
+      -0.3932056583377867
+    ],
+    [
+      -0.027071874929781026,
+      -0.01975835228814849,
+      0.9994382027432431,
+      1.0288999860649795e-05
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "tx_gripper2camera": [
+    [
+      0.013217058629198336,
+      -0.9927788269516905,
+      -0.11922881412484991,
+      -0.0012266295956720433
+    ],
+    [
+      -0.3241621886249503,
+      0.10854506036409212,
+      -0.939753608844594,
+      0.11064565038842053
+    ],
+    [
+      0.9459091842386744,
+      0.05107025187896847,
+      -0.3203867109384287,
+      -0.048058342021335965
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "matrix_semantics": {
+    "tx_base2world_key_actual_semantics": "T_world_base (^w T_b), OpenCV base-to-world output stored under legacy key tx_base2world",
+    "tx_gripper2camera_key_actual_semantics": "T_camera_gripper (^c T_g), OpenCV gripper-to-camera output stored under legacy key tx_gripper2camera",
+    "closed_loop_formula": "T_camera_world @ T_world_base == T_camera_gripper @ T_gripper_base"
+  },
+  "pose_key": "tcp_pose",
+  "pose_rotation_repr": "rotvec",
+  "variant": {
+    "name": "processed_aruco_offset_300_350_bound5",
+    "detection_key": "processed_aruco",
+    "detection_mode": "processed",
+    "image_mode": "processed",
+    "aruco_source": "processed_aruco",
+    "distance_filter": "300_350",
+    "min_mm": 300.0,
+    "max_mm": 350.0,
+    "pose_source": "joint_state_corrected_fk",
+    "runtime_safe": false,
+    "offset_bound_deg": 5.0,
+    "comparison_only": true
+  },
+  "virtual_joint_zero_offsets_deg": [
+    2.447144,
+    -1.621184,
+    -5.0,
+    -5.0,
+    1.94543,
+    -3.106103
+  ],
+  "runtime_warning": "Diagnostic only. Do not deploy unless runtime current_tcp_pose is computed from joint_state with the same offsets."
+}

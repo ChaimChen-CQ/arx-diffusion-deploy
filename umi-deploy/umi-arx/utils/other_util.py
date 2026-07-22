@@ -1,8 +1,12 @@
 from typing import Tuple
 import math
-import cv2
 import numpy as np
 import time
+
+try:
+    import cv2
+except ModuleNotFoundError:
+    cv2 = None
 
 
 def get_image_transform(
@@ -10,6 +14,10 @@ def get_image_transform(
     output_res: Tuple[int, int] = (640, 480),
     bgr_to_rgb: bool = False,
 ):
+    if cv2 is None:
+        raise ModuleNotFoundError(
+            "cv2 is required for get_image_transform(), but it is not installed."
+        )
 
     iw, ih = input_res
     ow, oh = output_res

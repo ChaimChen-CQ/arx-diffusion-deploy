@@ -1,0 +1,22 @@
+# Debug-only calibration: pure ARX-base policy frame.
+#
+# This is the cleanest A/B test against the original UMI eval path:
+#   policy frame == ARX base frame
+#   policy tcp   == ARX tcp
+#
+# It intentionally does NOT include tx_arx_tcp_camera, tx_gripper2camera, or
+# tx_camera_policy_tcp, because eval_arx5.py derives TCP offsets from those keys.
+# Start with --dry_run_policy only.
+action_reference_frame: policy
+
+tx_policy_frame_from_arx_base:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0]
+  - [0.0, 0.0, 0.0, 1.0]
+
+tx_policy_tcp_from_arx_tcp:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0]
+  - [0.0, 0.0, 0.0, 1.0]

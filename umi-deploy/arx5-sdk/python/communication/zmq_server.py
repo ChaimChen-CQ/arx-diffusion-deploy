@@ -35,7 +35,14 @@ class Arx5Server:
     ):
         self.model = model
         self.interface = interface
-        self.arx5_cartesian_controller = arx5.Arx5CartesianController(model, interface)
+        robot_config = arx5.RobotConfigFactory.get_instance().get_config(model)
+        controller_config = arx5.ControllerConfigFactory.get_instance().get_config(
+            "cartesian_controller", robot_config.joint_dof
+        )
+        controller_config.gravity_compensation = True
+        self.arx5_cartesian_controller = arx5.Arx5CartesianController(
+            robot_config, controller_config, interface
+        )
         print(f"Arx5Server is initialized with {model} on {interface}")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
@@ -56,10 +63,20 @@ class Arx5Server:
                 socks = dict(self.poller.poll(int(self.no_cmd_timeout * 1000)))
                 if self.socket in socks and socks[self.socket] == zmq.POLLIN:
                     msg: dict[str, Any] = self.socket.recv_pyobj()
+                    print(f"Received message: {msg}", flush=True)
                     if self.arx5_cartesian_controller is None:
-                        print(f"Reestablishing high level controller")
+                        print(f"Reestablishing high level controller", flush=True)
+                        robot_config = arx5.RobotConfigFactory.get_instance().get_config(
+                            self.model
+                        )
+                        controller_config = (
+                            arx5.ControllerConfigFactory.get_instance().get_config(
+                                "cartesian_controller", robot_config.joint_dof
+                            )
+                        )
+                        controller_config.gravity_compensation = True
                         self.arx5_cartesian_controller = arx5.Arx5CartesianController(
-                            self.model, self.interface
+                            robot_config, controller_config, self.interface
                         )
                 else:
 
@@ -81,7 +98,7 @@ class Arx5Server:
                 continue
             try:
                 if not isinstance(msg, dict):
-                    print(f"Error: Received invalid Message {msg}, ignored")
+                    print(f"Error: Received invalid Message {msg}, ignored", flush=True)
                     self.socket.send_pyobj(
                         {
                             "cmd": "UNKNOWN",
@@ -89,14 +106,21 @@ class Arx5Server:
                         }
                     )
                     continue
-                if msg["cmd"] == "GET_STATE":
-                    # print(f"Received GET_STATE message")
+                if msg["cmd"] == "PING":
+                    self.socket.send_pyobj({"cmd": "PING", "data": "OK"})
+                    print("Replied PING", flush=True)
+                elif msg["cmd"] == "GET_STATE":
+                    print("Handling GET_STATE", flush=True)
                     eef_pose_cmd = self.arx5_cartesian_controller.get_eef_cmd()
+                    self.last_eef_cmd = eef_pose_cmd.pose_6d().copy()
+                    print("GET_STATE get_eef_cmd done", flush=True)
                     eef_state = self.arx5_cartesian_controller.get_eef_state()
+                    print("GET_STATE get_eef_state done", flush=True)
 
-                    print(f"{eef_pose_cmd}")
-                    print(f"{eef_state.pose_6d()}")
+                    print(f"{eef_pose_cmd}", flush=True)
+                    print(f"{eef_state.pose_6d()}", flush=True)
                     low_state = self.arx5_cartesian_controller.get_joint_state()
+                    print("GET_STATE get_joint_state done", flush=True)
                     reply_msg = {
                         "cmd": "GET_STATE",
                         "data": {
@@ -111,10 +135,85 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied GET_STATE", flush=True)
+                elif msg["cmd"] == "SET_JOINT_POS":
+                    print(f"Received SET_JOINT_POS message, data: {msg['data']}", flush=True)
+                    data = msg["data"]
+                    if not isinstance(data, dict):
+                        raise ValueError("SET_JOINT_POS data must be a dictionary")
+
+                    target_joint_pos = np.asarray(data.get("joint_pos"), dtype=np.float64)
+                    if target_joint_pos.shape != (6,) or not np.all(np.isfinite(target_joint_pos)):
+                        raise ValueError("SET_JOINT_POS requires 6 finite joint values")
+
+                    robot_config = self.arx5_cartesian_controller.get_robot_config()
+                    if np.any(target_joint_pos < robot_config.joint_pos_min) or np.any(
+                        target_joint_pos > robot_config.joint_pos_max
+                    ):
+                        raise ValueError(
+                            f"Joint target is outside limits: min={robot_config.joint_pos_min}, "
+                            f"max={robot_config.joint_pos_max}, target={target_joint_pos}"
+                        )
+
+                    low_state = self.arx5_cartesian_controller.get_joint_state()
+                    current_joint_pos = low_state.pos().copy()
+                    max_delta = float(np.max(np.abs(target_joint_pos - current_joint_pos)))
+                    requested_max_step = float(data.get("max_joint_step_rad", 0.05))
+                    if not np.isfinite(requested_max_step) or requested_max_step <= 0:
+                        raise ValueError("max_joint_step_rad must be finite and positive")
+                    allowed_max_step = min(requested_max_step, 1.6)
+                    if max_delta > allowed_max_step:
+                        raise ValueError(
+                            f"Joint target delta {max_delta:.3f} rad exceeds allowed "
+                            f"{allowed_max_step:.3f} rad"
+                        )
+
+                    requested_duration = float(data.get("duration", 2.0))
+                    if not np.isfinite(requested_duration) or requested_duration <= 0:
+                        raise ValueError("duration must be finite and positive")
+                    duration = max(requested_duration, 2.0, max_delta / 0.2)
+                    if duration > 30.0:
+                        raise ValueError(f"Required joint trajectory duration {duration:.1f}s exceeds 30s")
+
+                    gripper_pos = data.get("gripper_pos")
+                    if gripper_pos is None:
+                        gripper_pos = low_state.gripper_pos
+                    gripper_pos = float(gripper_pos)
+                    if not np.isfinite(gripper_pos):
+                        raise ValueError("gripper_pos must be finite")
+
+                    joint_cmd = arx5.JointState(robot_config.joint_dof)
+                    joint_cmd.pos()[:] = target_joint_pos
+                    joint_cmd.gripper_pos = gripper_pos
+                    joint_cmd.timestamp = self.arx5_cartesian_controller.get_timestamp() + duration
+                    self.arx5_cartesian_controller.set_joint_cmd(joint_cmd)
+                    self.is_reset_to_home = False
+
+                    eef_state = self.arx5_cartesian_controller.get_eef_state()
+                    reply_msg = {
+                        "cmd": "SET_JOINT_POS",
+                        "data": {
+                            "timestamp": eef_state.timestamp,
+                            "ee_pose": eef_state.pose_6d().copy(),
+                            "joint_pos": low_state.pos().copy(),
+                            "joint_vel": low_state.vel().copy(),
+                            "joint_torque": low_state.torque().copy(),
+                            "gripper_pos": low_state.gripper_pos,
+                            "gripper_vel": low_state.gripper_vel,
+                            "gripper_torque": low_state.gripper_torque,
+                            "scheduled_duration": duration,
+                        },
+                    }
+                    self.socket.send_pyobj(reply_msg)
+                    print(
+                        f"Replied SET_JOINT_POS; scheduled {duration:.2f}s trajectory, "
+                        f"max delta {max_delta:.3f} rad",
+                        flush=True,
+                    )
                 elif msg["cmd"] == "SET_EE_POSE":
                     if self.last_eef_cmd is None:
                         error_str = "Error: Cannot set EE pose before RESET_TO_HOME. Please check the input."
-                        print(error_str)
+                        print(error_str, flush=True)
                         self.socket.send_pyobj(
                             {
                                 "cmd": "SET_EE_POSE",
@@ -127,7 +226,7 @@ class Arx5Server:
 
                     if np.linalg.norm(target_ee_pose - self.last_eef_cmd) > 0.1:
                         error_str = f"Error: Cannot set EE pose {target_ee_pose} far away from last command: {self.last_eef_cmd}. Please check the input."
-                        print(error_str)
+                        print(error_str, flush=True)
                         self.socket.send_pyobj(
                             {
                                 "cmd": "SET_EE_POSE",
@@ -153,7 +252,7 @@ class Arx5Server:
                             > 0.1
                         ):
                             error_str = f"Error: Cannot set EE pose far away from home: {target_ee_pose} after RESET_TO_HOME. Please check the input."
-                            print(error_str)
+                            print(error_str, flush=True)
                             self.socket.send_pyobj(
                                 {
                                     "cmd": "SET_EE_POSE",
@@ -181,9 +280,10 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied SET_EE_POSE", flush=True)
                     self.is_reset_to_home = False
                 elif msg["cmd"] == "RESET_TO_HOME":
-                    print(f"Received RESET_TO_HOME message")
+                    print(f"Received RESET_TO_HOME message", flush=True)
                     self.arx5_cartesian_controller.reset_to_home()
                     reply_msg = {
                         "cmd": "RESET_TO_HOME",
@@ -191,18 +291,20 @@ class Arx5Server:
                     }
                     self.last_eef_cmd = self.arx5_cartesian_controller.get_eef_cmd().pose_6d().copy()
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied RESET_TO_HOME", flush=True)
                     self.is_reset_to_home = True
                 elif msg["cmd"] == "SET_TO_DAMPING":
-                    print(f"Received SET_TO_DAMPING message")
+                    print(f"Received SET_TO_DAMPING message", flush=True)
                     self.arx5_cartesian_controller.set_to_damping()
                     reply_msg = {
                         "cmd": "SET_TO_DAMPING",
                         "data": "OK",
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied SET_TO_DAMPING", flush=True)
                     self.is_reset_to_home = False
                 elif msg["cmd"] == "GET_GAIN":
-                    print(f"Received GET_GAIN message")
+                    print(f"Received GET_GAIN message", flush=True)
                     gain = self.arx5_cartesian_controller.get_gain()
                     reply_msg = {
                         "cmd": "GET_GAIN",
@@ -214,8 +316,9 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied GET_GAIN", flush=True)
                 elif msg["cmd"] == "SET_GAIN":
-                    print(f"Received SET_GAIN message, data: {msg['data']}")
+                    print(f"Received SET_GAIN message, data: {msg['data']}", flush=True)
                     assert isinstance(msg["data"], dict)
 
                     kp = cast(np.ndarray, msg["data"]["kp"])
@@ -230,6 +333,7 @@ class Arx5Server:
                         "data": "OK",
                     }
                     self.socket.send_pyobj(reply_msg)
+                    print("Replied SET_GAIN", flush=True)
                 else:
                     raise ValueError(f"Unknown message type: {msg['cmd']}")
             except KeyboardInterrupt:

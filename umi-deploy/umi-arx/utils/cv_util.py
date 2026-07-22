@@ -42,6 +42,8 @@ def parse_fisheye_intrinsics(json_data: dict) -> Dict[str, np.ndarray]:
 
     # pinhole parameters
     f = intr_data["focal_length"]
+    fx = intr_data.get("focal_length_x", f)
+    fy = intr_data.get("focal_length_y", f)
     px = intr_data["principal_pt_x"]
     py = intr_data["principal_pt_y"]
 
@@ -55,7 +57,7 @@ def parse_fisheye_intrinsics(json_data: dict) -> Dict[str, np.ndarray]:
 
     opencv_intr_dict = {
         "DIM": np.array([w, h], dtype=np.int64),
-        "K": np.array([[f, 0, px], [0, f, py], [0, 0, 1]], dtype=np.float64),
+        "K": np.array([[fx, 0, px], [0, fy, py], [0, 0, 1]], dtype=np.float64),
         "D": np.array([kb8]).T,
     }
     return opencv_intr_dict
@@ -65,27 +67,20 @@ def convert_fisheye_intrinsics_resolution(
     opencv_intr_dict: Dict[str, np.ndarray], target_resolution: Tuple[int, int]
 ) -> Dict[str, np.ndarray]:
     """
-    Convert fisheye intrinsics parameter to a different resolution,
-    assuming that images are not cropped in the vertical dimension,
-    and only symmetrically cropped/padded in horizontal dimension.
+    Return fisheye intrinsics only when the image resolution already matches.
+
+    Do not scale UMI gripper fisheye intrinsics across UVC modes. Different modes
+    can change FOV/crop/binning, so mismatched resolutions must be re-calibrated.
     """
-    iw, ih = opencv_intr_dict["DIM"]
-    iK = opencv_intr_dict["K"]
-    ifx = iK[0, 0]
-    ify = iK[1, 1]
-    ipx = iK[0, 2]
-    ipy = iK[1, 2]
-
-    ow, oh = target_resolution
-    ofx = ifx / ih * oh
-    ofy = ify / ih * oh
-    opx = (ipx - (iw / 2)) / ih * oh + (ow / 2)
-    opy = ipy / ih * oh
-    oK = np.array([[ofx, 0, opx], [0, ofy, opy], [0, 0, 1]], dtype=np.float64)
-
+    expected_resolution = tuple(int(value) for value in opencv_intr_dict["DIM"])
+    actual_resolution = tuple(int(value) for value in target_resolution)
+    if actual_resolution != expected_resolution:
+        raise ValueError(
+            f"Fisheye intrinsics resolution {expected_resolution[0]}x{expected_resolution[1]} "
+            f"does not match image resolution {actual_resolution[0]}x{actual_resolution[1]}. "
+            "Re-capture at the calibrated resolution or calibrate intrinsics for this resolution."
+        )
     out_intr_dict = copy.deepcopy(opencv_intr_dict)
-    out_intr_dict["DIM"] = np.array([ow, oh], dtype=np.int64)
-    out_intr_dict["K"] = oK
     return out_intr_dict
 
 
@@ -147,6 +142,49 @@ def get_aruco_dict(predefined: str) -> cv2.aruco.Dictionary:
     return cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, predefined))
 
 
+def _make_aruco_detector_parameters():
+    if hasattr(cv2.aruco, "DetectorParameters"):
+        return cv2.aruco.DetectorParameters()
+    return cv2.aruco.DetectorParameters_create()
+
+
+def _detect_aruco_markers(img, aruco_dict, parameters):
+    if hasattr(cv2.aruco, "ArucoDetector"):
+        detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
+        return detector.detectMarkers(img)
+    return cv2.aruco.detectMarkers(image=img, dictionary=aruco_dict, parameters=parameters)
+
+
+def _estimate_single_marker_pose(corners, marker_size_m, K):
+    zero_dist = np.zeros((1, 5), dtype=np.float64)
+    if hasattr(cv2.aruco, "estimatePoseSingleMarkers"):
+        rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
+            corners, marker_size_m, K, zero_dist
+        )
+        return rvec.squeeze(), tvec.squeeze()
+
+    half_size = float(marker_size_m) / 2.0
+    object_points = np.array(
+        [
+            [-half_size, half_size, 0.0],
+            [half_size, half_size, 0.0],
+            [half_size, -half_size, 0.0],
+            [-half_size, -half_size, 0.0],
+        ],
+        dtype=np.float64,
+    )
+    image_points = np.asarray(corners, dtype=np.float64).reshape(4, 2)
+    flag = getattr(cv2, "SOLVEPNP_IPPE_SQUARE", cv2.SOLVEPNP_ITERATIVE)
+    ok, rvec, tvec = cv2.solvePnP(object_points, image_points, K, zero_dist, flags=flag)
+    if not ok:
+        ok, rvec, tvec = cv2.solvePnP(
+            object_points, image_points, K, zero_dist, flags=cv2.SOLVEPNP_ITERATIVE
+        )
+    if not ok:
+        return None, None
+    return rvec.squeeze(), tvec.squeeze()
+
+
 def detect_localize_aruco_tags(
     img: np.ndarray,
     aruco_dict: cv2.aruco.Dictionary,
@@ -156,13 +194,11 @@ def detect_localize_aruco_tags(
 ):
     K = fisheye_intr_dict["K"]
     D = fisheye_intr_dict["D"]
-    param = cv2.aruco.DetectorParameters()
+    param = _make_aruco_detector_parameters()
     if refine_subpix:
         param.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
-    corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(
-        image=img, dictionary=aruco_dict, parameters=param
-    )
-    if len(corners) == 0:
+    corners, ids, rejectedImgPoints = _detect_aruco_markers(img, aruco_dict, param)
+    if ids is None or len(corners) == 0:
         return dict()
 
     tag_dict = dict()
@@ -173,9 +209,9 @@ def detect_localize_aruco_tags(
 
         marker_size_m = marker_size_map[this_id]
         undistorted = cv2.fisheye.undistortPoints(this_corners, K, D, P=K)
-        rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(
-            undistorted, marker_size_m, K, np.zeros((1, 5))
-        )
+        rvec, tvec = _estimate_single_marker_pose(undistorted, marker_size_m, K)
+        if rvec is None or tvec is None:
+            continue
         tag_dict[this_id] = {
             "rvec": rvec.squeeze(),
             "tvec": tvec.squeeze(),

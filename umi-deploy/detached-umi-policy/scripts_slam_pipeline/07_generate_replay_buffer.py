@@ -38,11 +38,12 @@ register_codecs()
 @click.option('-o', '--output', required=True, help='Zarr path')
 @click.option('-or', '--out_res', type=str, default='224,224')
 @click.option('-of', '--out_fov', type=float, default=None)
+@click.option('--fisheye_intrinsics', type=str, default=None, help='Fisheye intrinsics JSON matching raw videos; required with --out_fov')
 @click.option('-cl', '--compression_level', type=int, default=99)
 @click.option('-nm', '--no_mirror', is_flag=True, default=False, help="Disable mirror observation by masking them out")
 @click.option('-ms', '--mirror_swap', is_flag=True, default=False)
 @click.option('-n', '--num_workers', type=int, default=None)
-def main(input, output, out_res, out_fov, compression_level, 
+def main(input, output, out_res, out_fov, fisheye_intrinsics, compression_level, 
          no_mirror, mirror_swap, num_workers):
     if os.path.isfile(output):
         if click.confirm(f'Output file {output} exists! Overwrite?', abort=True):
@@ -56,10 +57,11 @@ def main(input, output, out_res, out_fov, compression_level,
             
     fisheye_converter = None
     if out_fov is not None:
-        intr_path = pathlib.Path(os.path.expanduser(ipath)).absolute().joinpath(
-            'calibration',
-            'gopro_intrinsics_2_7k.json'
-        )
+        if fisheye_intrinsics is None:
+            raise click.ClickException(
+                "--out_fov requires --fisheye_intrinsics. There is no default legacy intrinsics fallback."
+            )
+        intr_path = pathlib.Path(os.path.expanduser(fisheye_intrinsics)).absolute()
         opencv_intr_dict = parse_fisheye_intrinsics(json.load(intr_path.open('r')))
         fisheye_converter = FisheyeRectConverter(
             **opencv_intr_dict,

@@ -1,0 +1,23 @@
+{
+  "frame_seq": 4,
+  "raw_shape": [
+    480,
+    640,
+    3
+  ],
+  "raw_dtype": "uint8",
+  "decoded_shape": [
+    480,
+    640,
+    3
+  ],
+  "decoded_dtype": "uint8",
+  "decode_mode": "opencv_bgr_3ch",
+  "requested_fourcc": "MJPG",
+  "negotiated_fourcc": "MJPG",
+  "bad_frame": false,
+  "stripe_score": 0.7470960094343639,
+  "stripe_col_p95": 5.828749799728394,
+  "stripe_row_p95": 6.801875162124633,
+  "stripe_high_col_fraction": 0.001564945226917058
+}

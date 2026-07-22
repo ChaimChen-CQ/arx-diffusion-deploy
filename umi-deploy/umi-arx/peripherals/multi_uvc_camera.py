@@ -23,12 +23,14 @@ class MultiUvcCamera:
         get_max_k=30,
         receive_latency=0.0,
         cap_buffer_size=1,
+        capture_fourcc=None,
         transform: Optional[Union[Callable[[Dict], Dict], List[Callable]]] = None,
         vis_transform: Optional[Union[Callable[[Dict], Dict], List[Callable]]] = None,
         recording_transform: Optional[
             Union[Callable[[Dict], Dict], List[Callable]]
         ] = None,
         video_recorder: Optional[Union[VideoRecorder, List[VideoRecorder]]] = None,
+        enable_video_recording=True,
         verbose=False,
     ):
         super().__init__()
@@ -41,10 +43,12 @@ class MultiUvcCamera:
         resolution = repeat_to_list(resolution, n_cameras, tuple)
         capture_fps = repeat_to_list(capture_fps, n_cameras, (int, float))
         cap_buffer_size = repeat_to_list(cap_buffer_size, n_cameras, int)
+        capture_fourcc = repeat_to_list(capture_fourcc, n_cameras, str)
         transform = repeat_to_list(transform, n_cameras, Callable)
         vis_transform = repeat_to_list(vis_transform, n_cameras, Callable)
         recording_transform = repeat_to_list(recording_transform, n_cameras, Callable)
         video_recorder = repeat_to_list(video_recorder, n_cameras, VideoRecorder)
+        enable_video_recording = repeat_to_list(enable_video_recording, n_cameras, bool)
 
         cameras = dict()
         for i, path in enumerate(dev_video_paths):
@@ -58,10 +62,12 @@ class MultiUvcCamera:
                 get_max_k=get_max_k,
                 receive_latency=receive_latency,
                 cap_buffer_size=cap_buffer_size[i],
+                capture_fourcc=capture_fourcc[i],
                 transform=transform[i],
                 vis_transform=vis_transform[i],
                 recording_transform=recording_transform[i],
                 video_recorder=video_recorder[i],
+                enable_video_recording=enable_video_recording[i],
                 verbose=verbose,
             )
 

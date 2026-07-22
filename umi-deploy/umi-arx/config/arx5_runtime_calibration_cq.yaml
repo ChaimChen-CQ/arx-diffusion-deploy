@@ -1,0 +1,51 @@
+# Runtime calibration used by umi-arx/scripts/eval_arx5.py.
+#
+# Source:
+#   /home/chaim/ARX5_DAS_Hand_Eye_Calibration/eye_hand_data/data2026070702/hand_eye_result.json
+#   handeye_method: TSAI
+#   valid_pair_count: 26
+#   marker_id: 0
+#   marker_length_m: 0.2002
+#
+# Directions follow the repo convention:
+#   tx_a_b == T_a_b, pose of frame b expressed in frame a.
+#
+# This hand-eye result provides R_cam2gripper/t_cam2gripper, interpreted as
+# T_arx_tcp_camera. The file does not contain a base/world transform, so the
+# policy frame is left identical to the ARX base frame.
+action_reference_frame: camera
+
+tx_policy_frame_from_arx_base:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.0]
+  - [0.0, 0.0, 1.0, 0.0]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# hand_eye_result.json: R_cam2gripper/t_cam2gripper == T_arx_tcp_camera.
+tx_arx_tcp_camera:
+  - [-0.0003921575140513056, -0.26160970919920484, 0.9651736663757418, -0.11668725746121542]
+  - [-0.999989466853032, 0.004516338018323296, 0.0008178471084737682, -0.0029193655675383255]
+  - [-0.00457300726795451, -0.9651631793347754, -0.2616087247415795, 0.07387999207403093]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# Legacy/inspection key: inverse of T_arx_tcp_camera, i.e. T_camera_arx_tcp.
+tx_gripper2camera:
+  - [-0.00039215751405117464, -0.9999894668530323, -0.00457300726795448, -0.002627240861528227]
+  - [-0.2616097091992048, 0.004516338018323358, -0.9651631793347753, 0.04079291338942044]
+  - [0.9651736663757418, 0.0008178471084736496, -0.2616087247415795, 0.13195350620826463]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# 06_generate_dataset_plan.py default:
+#   pose_cam_tcp = [0, 0.086, 0.205 + 0.01465, 0, 0, 0]
+tx_camera_policy_tcp:
+  - [1.0, 0.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0, 0.086]
+  - [0.0, 0.0, 1.0, 0.21965]
+  - [0.0, 0.0, 0.0, 1.0]
+
+# tx_arx_tcp_camera @ tx_camera_policy_tcp.
+tx_policy_tcp_from_arx_tcp:
+  - [-0.0003921575140513056, -0.26160970919920484, 0.9651736663757418, 0.07281470336708465]
+  - [-0.999989466853032, 0.004516338018323296, 0.0008178471084737682, -0.0023513203805862587]
+  - [-0.00457300726795451, -0.9651631793347754, -0.2616087247415795, -0.06658639773824768]
+  - [0.0, 0.0, 0.0, 1.0]
