@@ -136,513 +136,100 @@ def solve_sphere_collision(ee_poses, robots_config):
                 )
 
 
-def _load_structured_config(config_path):
-    ext = os.path.splitext(config_path)[1].lower()
-    with open(config_path, "r") as f:
-        if ext == ".json":
-            payload = json.load(f)
-        else:
-            payload = OmegaConf.to_container(OmegaConf.load(f), resolve=True)
-    if payload is None:
-        payload = dict()
-    if "runtime_pose_transform" in payload:
-        payload = payload["runtime_pose_transform"]
-    return payload
+def load_hand_eye_transform(path, direction="eef_to_camera"):
+    """Load fixed extrinsic between ARX TCP/EEF and GenRobot camera0.
 
-
-def _get_optional_transform(payload, candidate_keys):
-    for key in candidate_keys:
-        value = payload.get(key, None)
-        if value is None:
-            continue
-        return np.asarray(value, dtype=np.float64), key
-    return None, None
-
-
-def load_runtime_pose_transform(runtime_calibration):
-    if runtime_calibration is None:
-        return make_runtime_pose_transform(), dict()
-
-    payload = _load_structured_config(runtime_calibration)
-    tx_policy_frame_from_env_base, tx_policy_frame_from_env_base_key = (
-        _get_optional_transform(
-            payload,
-            [
-                "tx_policy_frame_from_arx_base",
-                "tx_policy_frame_from_env_base",
-                "tx_base2world",
-            ],
-        )
-    )
-    tx_env_base_from_policy_frame, tx_env_base_from_policy_frame_key = (
-        _get_optional_transform(
-            payload,
-            [
-                "tx_arx_base_from_policy_frame",
-                "tx_env_base_from_policy_frame",
-                "tx_world2base",
-            ],
-        )
-    )
-    tx_policy_tcp_from_env_tcp, tx_policy_tcp_from_env_tcp_key = (
-        _get_optional_transform(
-            payload,
-            [
-                "tx_policy_tcp_from_arx_tcp",
-                "tx_policy_tcp_from_env_tcp",
-            ],
-        )
-    )
-    tx_env_tcp_from_policy_tcp, tx_env_tcp_from_policy_tcp_key = (
-        _get_optional_transform(
-            payload,
-            [
-                "tx_arx_tcp_from_policy_tcp",
-                "tx_env_tcp_from_policy_tcp",
-            ],
-        )
-    )
-    tx_env_tcp_camera, tx_env_tcp_camera_key = _get_optional_transform(
-        payload,
-        [
-            "tx_arx_tcp_camera",
-            "tx_env_tcp_camera",
-        ],
-    )
-    tx_camera_policy_tcp, tx_camera_policy_tcp_key = _get_optional_transform(
-        payload,
-        [
-            "tx_camera_policy_tcp",
-            "tx_cam_tcp",
-        ],
-    )
-    tx_gripper2camera, tx_gripper2camera_key = _get_optional_transform(
-        payload, ["tx_gripper2camera"]
-    )
-    tx_camera2gripper, tx_camera2gripper_key = _get_optional_transform(
-        payload, ["tx_camera2gripper"]
-    )
-    if tx_gripper2camera is None and tx_camera2gripper is not None:
-        tx_gripper2camera = np.linalg.inv(tx_camera2gripper)
-        tx_gripper2camera_key = tx_camera2gripper_key
-    if tx_env_tcp_camera is None and tx_gripper2camera is not None:
-        tx_env_tcp_camera = np.linalg.inv(tx_gripper2camera)
-        tx_env_tcp_camera_key = "inv(tx_gripper2camera)"
-
-    runtime_pose_transform = make_runtime_pose_transform(
-        tx_policy_frame_from_env_base=tx_policy_frame_from_env_base,
-        tx_env_base_from_policy_frame=tx_env_base_from_policy_frame,
-        tx_policy_tcp_from_env_tcp=tx_policy_tcp_from_env_tcp,
-        tx_env_tcp_from_policy_tcp=tx_env_tcp_from_policy_tcp,
-        tx_env_tcp_camera=tx_env_tcp_camera,
-        tx_camera_policy_tcp=tx_camera_policy_tcp,
-        action_reference_frame=payload.get("action_reference_frame", "policy"),
-        source_path=runtime_calibration,
-        reference_tx_gripper2camera=tx_gripper2camera,
-    )
-    loaded_keys = {
-        "tx_policy_frame_from_env_base_key": tx_policy_frame_from_env_base_key,
-        "tx_env_base_from_policy_frame_key": tx_env_base_from_policy_frame_key,
-        "tx_policy_tcp_from_env_tcp_key": tx_policy_tcp_from_env_tcp_key,
-        "tx_env_tcp_from_policy_tcp_key": tx_env_tcp_from_policy_tcp_key,
-        "tx_env_tcp_camera_key": tx_env_tcp_camera_key,
-        "tx_camera_policy_tcp_key": tx_camera_policy_tcp_key,
-        "action_reference_frame": runtime_pose_transform.action_reference_frame,
-        "tx_gripper2camera_key": tx_gripper2camera_key,
-    }
-    return runtime_pose_transform, loaded_keys
-
-
-def load_gripper_fisheye_intrinsics(intrinsics_path):
-    if intrinsics_path is None:
-        raise ValueError(
-            "ARX5 runtime requires explicit UMI gripper fisheye intrinsics; "
-            "pass --gripper_fisheye_intrinsics."
-        )
-    with open(intrinsics_path, "r") as f:
-        intrinsics = parse_fisheye_intrinsics(json.load(f))
-    capture_resolution = tuple(int(value) for value in intrinsics["DIM"])
-    if capture_resolution[0] <= 0 or capture_resolution[1] <= 0:
-        raise ValueError(
-            f"Invalid gripper fisheye intrinsics resolution from {intrinsics_path}: "
-            f"{capture_resolution}"
-        )
-    return intrinsics, capture_resolution
-
-
-def extract_robot_pose_from_obs(obs, robot_id=0):
-    return np.concatenate(
-        [
-            obs[f"robot{robot_id}_eef_pos"][-1],
-            obs[f"robot{robot_id}_eef_rot_axis_angle"][-1],
-        ],
-        axis=-1,
-    )
-
-
-def summarize_runtime_pose_transform(runtime_pose_transform, loaded_keys):
-    print("[RUNTIME_XFORM] enabled:", runtime_pose_transform.enabled)
-    if runtime_pose_transform.source_path is not None:
-        print("[RUNTIME_XFORM] source:", runtime_pose_transform.source_path)
-    if loaded_keys:
-        print("[RUNTIME_XFORM] loaded_keys:", loaded_keys)
-    print(
-        "[RUNTIME_XFORM] tx_policy_frame_from_env_base:\n",
-        runtime_pose_transform.tx_policy_frame_from_env_base,
-    )
-    print(
-        "[RUNTIME_XFORM] tx_policy_tcp_from_env_tcp:\n",
-        runtime_pose_transform.tx_policy_tcp_from_env_tcp,
-    )
-    print(
-        "[RUNTIME_XFORM] tx_env_tcp_camera:\n",
-        runtime_pose_transform.tx_env_tcp_camera,
-    )
-    print(
-        "[RUNTIME_XFORM] tx_camera_policy_tcp:\n",
-        runtime_pose_transform.tx_camera_policy_tcp,
-    )
-    print(
-        "[RUNTIME_XFORM] action_reference_frame:",
-        runtime_pose_transform.action_reference_frame,
-    )
-    if runtime_pose_transform.reference_tx_gripper2camera is not None:
-        print(
-            "[RUNTIME_XFORM] tx_gripper2camera loaded as OpenCV T_camera_tcp. "
-            "Runtime uses inv(tx_gripper2camera) as T_arx_tcp_camera unless "
-            "tx_arx_tcp_camera is explicitly provided.\n",
-            runtime_pose_transform.reference_tx_gripper2camera,
-        )
-
-
-def log_runtime_transform_step(
-    raw_arx_obs,
-    policy_obs,
-    raw_policy_action,
-    policy_action,
-    converted_arx_action,
-    final_tcp_pose_cmd,
-    runtime_pose_transform=None,
-):
-    raw_arx_pose = extract_robot_pose_from_obs(raw_arx_obs)
-    converted_policy_pose = extract_robot_pose_from_obs(policy_obs)
-    if runtime_pose_transform is not None:
-        print(
-            "[RUNTIME_XFORM] action_reference_frame:",
-            runtime_pose_transform.action_reference_frame,
-        )
-    print(
-        "[RUNTIME_XFORM] raw_arx_pose:",
-        np.round(raw_arx_pose, 4).tolist(),
-    )
-    print(
-        "[RUNTIME_XFORM] converted_policy_pose:",
-        np.round(converted_policy_pose, 4).tolist(),
-        )
-    if (
-        runtime_pose_transform is not None
-        and runtime_pose_transform.uses_camera_frame_action
-    ):
-        tx_base_tcp = pose_to_mat(raw_arx_pose)
-        tx_base_camera = tx_base_tcp @ runtime_pose_transform.tx_env_tcp_camera
-        print(
-            "[RUNTIME_XFORM] current_tx_base_camera:\n",
-            np.round(tx_base_camera, 4),
-        )
-        print(
-            "[FRAME_DEBUG] camera_axes_in_base x/y/z:",
-            np.round(tx_base_camera[:3, 0], 4).tolist(),
-            np.round(tx_base_camera[:3, 1], 4).tolist(),
-            np.round(tx_base_camera[:3, 2], 4).tolist(),
-        )
-        if raw_policy_action is not None:
-            raw_xyz = np.asarray(raw_policy_action[0, :3], dtype=np.float64)
-            raw_xyz_as_base = tx_base_camera[:3, :3] @ raw_xyz
-            print(
-                "[FRAME_DEBUG] raw_action_xyz_as_camera_delta:",
-                np.round(raw_xyz, 5).tolist(),
-            )
-            print(
-                "[FRAME_DEBUG] raw_camera_delta_rotated_to_base:",
-                np.round(raw_xyz_as_base, 5).tolist(),
-            )
-        if final_tcp_pose_cmd is not None:
-            final_delta_base = (
-                np.asarray(final_tcp_pose_cmd[0, :3], dtype=np.float64)
-                - raw_arx_pose[:3]
-            )
-            print(
-                "[FRAME_DEBUG] final_cmd_delta_base:",
-                np.round(final_delta_base, 5).tolist(),
-            )
-            if raw_policy_action is not None:
-                print(
-                    "[FRAME_DEBUG] final_minus_raw_xyz_delta:",
-                    np.round(final_delta_base - raw_xyz_as_base, 5).tolist(),
-                )
-    if raw_policy_action is not None:
-        print(
-            "[RUNTIME_XFORM] raw_policy_action[0]:",
-            np.round(raw_policy_action[0], 4).tolist(),
-        )
-    if policy_action is not None:
-        policy_delta = (
-            np.asarray(policy_action[0, :3], dtype=np.float64)
-            - converted_policy_pose[:3]
-        )
-        print(
-            "[FRAME_DEBUG] policy_action_delta_policy_frame:",
-            np.round(policy_delta, 5).tolist(),
-        )
-    if policy_action is not None:
-        print(
-            "[RUNTIME_XFORM] policy_action[0]:",
-            np.round(policy_action[0], 4).tolist(),
-        )
-    if converted_arx_action is not None:
-        print(
-            "[RUNTIME_XFORM] converted_arx_action[0]:",
-            np.round(converted_arx_action[0], 4).tolist(),
-        )
-    if final_tcp_pose_cmd is not None:
-        final_delta_base = (
-            np.asarray(final_tcp_pose_cmd[0, :3], dtype=np.float64)
-            - raw_arx_pose[:3]
-        )
-        print(
-            "[FRAME_DEBUG] final_cmd_delta_base:",
-            np.round(final_delta_base, 5).tolist(),
-        )
-        print(
-            "[RUNTIME_XFORM] final_tcp_pose_cmd[0]:",
-            np.round(final_tcp_pose_cmd[0], 4).tolist(),
-        )
-
-
-def log_policy_obs_image_stats(obs_dict_np, prefix="[OBS_DEBUG]"):
-    for key, value in obs_dict_np.items():
-        if not key.endswith("_rgb"):
-            continue
-        arr = np.asarray(value)
-        if arr.size == 0:
-            print(f"{prefix} {key}: empty")
-            continue
-        stats = {
-            "shape": arr.shape,
-            "dtype": str(arr.dtype),
-            "min": float(np.min(arr)),
-            "max": float(np.max(arr)),
-            "mean": float(np.mean(arr)),
-            "std": float(np.std(arr)),
-        }
-        if arr.shape[0] >= 2:
-            stats["temporal_absdiff_mean"] = float(np.mean(np.abs(arr[-1] - arr[-2])))
-        print(f"{prefix} {key}:", stats)
-
-
-def log_action_chunk_summary(raw_arx_obs, target_poses, prefix="[CHUNK_DEBUG]"):
-    if target_poses is None or len(target_poses) == 0:
-        print(f"{prefix} empty target chunk")
-        return
-    raw_arx_pose = extract_robot_pose_from_obs(raw_arx_obs)
-    target_poses = np.asarray(target_poses, dtype=np.float64)
-    deltas = target_poses[:, :3] - raw_arx_pose[:3]
-    idxs = sorted(set([0, len(deltas) // 2, len(deltas) - 1]))
-    sample = {
-        int(i): np.round(deltas[i], 5).tolist()
-        for i in idxs
-    }
-    print(
-        f"{prefix} count={len(deltas)} "
-        f"delta_xyz first/mid/last={sample} "
-        f"min={np.round(np.min(deltas, axis=0), 5).tolist()} "
-        f"max={np.round(np.max(deltas, axis=0), 5).tolist()}"
-    )
-
-
-def _jsonable(value):
-    if isinstance(value, np.ndarray):
-        return value.tolist()
-    if isinstance(value, np.generic):
-        return value.item()
-    if isinstance(value, dict):
-        return {key: _jsonable(val) for key, val in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(val) for val in value]
-    return value
-
-
-def convert_offset_vector(offset, input_frame, tx_base_tcp, tx_base_camera):
-    frame_rot_in_base = {
-        "base": np.eye(3),
-        "tcp": tx_base_tcp[:3, :3],
-        "camera": tx_base_camera[:3, :3],
-    }
-    offset = np.asarray(offset, dtype=np.float64)
-    offset_base = frame_rot_in_base[input_frame] @ offset
-    return {
-        "base": offset_base,
-        "tcp": frame_rot_in_base["tcp"].T @ offset_base,
-        "camera": frame_rot_in_base["camera"].T @ offset_base,
-    }
-
-
-def convert_point_to_base(point, input_frame, tx_base_tcp, tx_base_camera):
-    point = np.asarray(point, dtype=np.float64)
-    if input_frame == "base":
-        return point
-    if input_frame == "tcp":
-        return tx_base_tcp[:3, :3] @ point + tx_base_tcp[:3, 3]
-    if input_frame == "camera":
-        return tx_base_camera[:3, :3] @ point + tx_base_camera[:3, 3]
-    raise ValueError(f"Unsupported input_frame: {input_frame}")
-
-
-def parse_bias_input(text):
-    values = [float(x) for x in text.replace(",", " ").split()]
-    if len(values) != 3:
-        raise ValueError("Expected exactly three numbers: dx dy dz")
-    return np.asarray(values, dtype=np.float64)
-
-
-def apply_action_z_bias(action, action_z_bias):
-    """Apply a fixed ARX-base Z offset to every robot target pose."""
-    action_arr = np.asarray(action)
-    if action_arr.shape[-1] % 7 != 0:
-        raise ValueError(
-            "Expected action last dimension to be a multiple of 7 "
-            f"(pose6 + gripper1), got {action_arr.shape[-1]}"
-        )
-
-    biased_action = np.array(action_arr, copy=True)
-    biased_action[..., 2::7] += action_z_bias
-    return biased_action
-
-
-def make_runtime_bias_snapshot(
-    episode_id,
-    iter_idx,
-    raw_arx_obs,
-    policy_obs,
-    raw_policy_action,
-    policy_action,
-    converted_arx_action,
-    final_tcp_pose_cmd,
-    runtime_pose_transform,
-):
-    raw_arx_pose = extract_robot_pose_from_obs(raw_arx_obs)
-    tx_base_tcp = pose_to_mat(raw_arx_pose)
-    tx_base_camera = tx_base_tcp @ runtime_pose_transform.tx_env_tcp_camera
-    return {
-        "timestamp": time.time(),
-        "episode_id": int(episode_id),
-        "iter_idx": int(iter_idx),
-        "raw_arx_pose": raw_arx_pose,
-        "converted_policy_pose": extract_robot_pose_from_obs(policy_obs),
-        "current_tx_base_tcp": tx_base_tcp,
-        "current_tx_base_camera": tx_base_camera,
-        "raw_policy_action": raw_policy_action,
-        "policy_action": policy_action,
-        "converted_arx_action": converted_arx_action,
-        "final_tcp_pose_cmd": final_tcp_pose_cmd,
-        "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
-    }
-
-
-def attach_manual_bias(
-    snapshot,
-    vector,
-    input_frame,
-    input_mode,
-):
-    tx_base_tcp = np.asarray(snapshot["current_tx_base_tcp"], dtype=np.float64)
-    tx_base_camera = np.asarray(snapshot["current_tx_base_camera"], dtype=np.float64)
-    final_tcp_pose_cmd = np.asarray(snapshot["final_tcp_pose_cmd"], dtype=np.float64)
-    final_tcp_pos = final_tcp_pose_cmd[-1, :3]
-
-    if input_mode == "offset":
-        offsets = convert_offset_vector(vector, input_frame, tx_base_tcp, tx_base_camera)
-        residual_base = offsets["base"]
-    elif input_mode == "object_center":
-        object_center_base = convert_point_to_base(
-            vector, input_frame, tx_base_tcp, tx_base_camera
-        )
-        residual_base = object_center_base - final_tcp_pos
-        offsets = convert_offset_vector(
-            residual_base, "base", tx_base_tcp, tx_base_camera
-        )
-    else:
-        raise ValueError(f"Unsupported input_mode: {input_mode}")
-
-    snapshot["manual_bias"] = {
-        "input_mode": input_mode,
-        "input_frame": input_frame,
-        "input_vector": vector,
-        "residual_base": residual_base,
-        "residual_tcp": offsets["tcp"],
-        "residual_camera": offsets["camera"],
-    }
-    return snapshot
-
-
-def save_runtime_bias_snapshot(
-    output,
-    snapshot,
-    prompt_bias_on_stop,
-    bias_input_frame,
-    bias_input_mode,
-):
-    if snapshot is None:
+    The ARX deployment code controls TCP/EEF, while GenRobot training data uses
+    camera0 optical center as "robot0_eef".  This function returns T_tcp_camera0.
+    """
+    if path is None or str(path).strip().lower() in {"", "none", "null"}:
         return None
 
-    record = dict(snapshot)
-    if prompt_bias_on_stop:
-        prompt = (
-            f"[BIAS] 输入 {bias_input_frame} frame 下的 "
-            f"{bias_input_mode} dx dy dz，单位米；空行跳过: "
-        )
-        try:
-            text = input(prompt).strip()
-        except EOFError:
-            text = ""
-        if text:
-            try:
-                vector = parse_bias_input(text)
-                record = attach_manual_bias(
-                    record,
-                    vector=vector,
-                    input_frame=bias_input_frame,
-                    input_mode=bias_input_mode,
-                )
-                manual_bias = record["manual_bias"]
-                print(
-                    "[BIAS] residual_base:",
-                    np.round(manual_bias["residual_base"], 5).tolist(),
-                )
-                print(
-                    "[BIAS] residual_camera:",
-                    np.round(manual_bias["residual_camera"], 5).tolist(),
-                )
-                print(
-                    "[BIAS] residual_tcp:",
-                    np.round(manual_bias["residual_tcp"], 5).tolist(),
-                )
-            except ValueError as e:
-                record["manual_bias_error"] = str(e)
-                print(f"[BIAS] 输入无效，保存 snapshot 但不保存 bias: {e}")
+    with open(path, "r") as f:
+        data = json.load(f)
 
-    bias_dir = os.path.join(output, "bias_records")
-    os.makedirs(bias_dir, exist_ok=True)
-    path = os.path.join(
-        bias_dir,
-        "episode_{:04d}_iter_{:06d}.json".format(
-            record["episode_id"], record["iter_idx"]
-        ),
-    )
-    with open(path, "w") as f:
-        json.dump(_jsonable(record), f, indent=2)
-    print(f"[BIAS] saved runtime bias snapshot: {path}")
-    return path
+    if "T_tcp_camera0" in data:
+        tx = np.asarray(data["T_tcp_camera0"], dtype=np.float64)
+    elif "T_eef_camera0" in data:
+        tx = np.asarray(data["T_eef_camera0"], dtype=np.float64)
+    elif "R_eef2cam" in data and "t_eef2cam" in data:
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, :3] = np.asarray(data["R_eef2cam"], dtype=np.float64)
+        tx[:3, 3] = np.asarray(data["t_eef2cam"], dtype=np.float64)
+    elif "R_cam2gripper" in data and "t_cam2gripper" in data:
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, :3] = np.asarray(data["R_cam2gripper"], dtype=np.float64)
+        tx[:3, 3] = np.asarray(data["t_cam2gripper"], dtype=np.float64)
+    elif "q_cam2gripper_xyzw" in data and "t_cam2gripper" in data:
+        tx = np.eye(4, dtype=np.float64)
+        tx[:3, :3] = st.Rotation.from_quat(
+            np.asarray(data["q_cam2gripper_xyzw"], dtype=np.float64)
+        ).as_matrix()
+        tx[:3, 3] = np.asarray(data["t_cam2gripper"], dtype=np.float64)
+    else:
+        raise ValueError(f"Unsupported hand-eye json format: {path}")
+
+    if tx.shape != (4, 4):
+        raise ValueError(f"Hand-eye transform must be 4x4, got {tx.shape}")
+
+    if direction == "camera_to_eef":
+        tx = np.linalg.inv(tx)
+    elif direction != "eef_to_camera":
+        raise ValueError(
+            "--hand_eye_direction must be either eef_to_camera or camera_to_eef"
+        )
+
+    print("Loaded hand-eye T_tcp_camera0:")
+    print(tx)
+    return tx
+
+
+def transform_pose_array(pose_array, tx_right):
+    """Right-multiply pose(s) by tx_right.
+
+    pose_array: (..., 6) xyz + rotvec for T_base_frame.
+    tx_right: 4x4 transform T_frame_new_frame.
+    returns: (..., 6) T_base_new_frame.
+    """
+    pose_array = np.asarray(pose_array)
+    flat_pose = pose_array.reshape(-1, 6)
+    out = np.zeros_like(flat_pose)
+    for i, pose in enumerate(flat_pose):
+        out[i] = mat_to_pose(pose_to_mat(pose) @ tx_right)
+    return out.reshape(pose_array.shape)
+
+
+def convert_obs_tcp_to_camera(obs, tx_tcp_camera0, n_robots):
+    if tx_tcp_camera0 is None:
+        return obs
+
+    obs = dict(obs)
+    for robot_idx in range(n_robots):
+        pose = np.concatenate(
+            [
+                obs[f"robot{robot_idx}_eef_pos"],
+                obs[f"robot{robot_idx}_eef_rot_axis_angle"],
+            ],
+            axis=-1,
+        )
+        cam_pose = transform_pose_array(pose, tx_tcp_camera0)
+        obs[f"robot{robot_idx}_eef_pos"] = cam_pose[..., :3]
+        obs[f"robot{robot_idx}_eef_rot_axis_angle"] = cam_pose[..., 3:]
+    return obs
+
+
+def convert_camera_action_to_tcp(action, tx_tcp_camera0, n_robots):
+    if tx_tcp_camera0 is None:
+        return action
+
+    action = np.asarray(action).copy()
+    tx_camera0_tcp = np.linalg.inv(tx_tcp_camera0)
+    for robot_idx in range(n_robots):
+        start = robot_idx * 7
+        cam_pose = action[..., start : start + 6]
+        tcp_pose = transform_pose_array(cam_pose, tx_camera0_tcp)
+        action[..., start : start + 6] = tcp_pose
+    return action
 
 
 @click.command()
@@ -739,46 +326,32 @@ def save_runtime_bias_snapshot(
 )
 @click.option("--mirror_swap", is_flag=True, default=False)
 @click.option(
-    "--log_runtime_transforms/--no_log_runtime_transforms",
-    default=True,
-    help="Print runtime pose/action conversion debug information when enabled.",
+    "--hand_eye_path",
+    default="/home/phi5090ii/CZY/arx-difussion-deploy/umi-deploy/hand_eye_result.json",
+    help="Hand-eye json. Interpreted as T_tcp_camera0 unless --hand_eye_direction says otherwise.",
 )
 @click.option(
-    "--record_bias_on_stop/--no_record_bias_on_stop",
-    default=True,
-    help="Save final pose/camera/action snapshot when policy control stops.",
+    "--hand_eye_direction",
+    type=click.Choice(["eef_to_camera", "camera_to_eef"]),
+    default="eef_to_camera",
+    help="Direction of the transform stored in --hand_eye_path.",
 )
 @click.option(
-    "--prompt_bias_on_stop",
-    is_flag=True,
-    default=False,
-    help="Prompt for manual dx dy dz bias when policy control stops.",
+    "--gripper_serial_port",
+    default="/dev/ttyDeviceLeft",
+    help="Gen gripper serial device. Use /dev/ttyDeviceRight for right gripper.",
 )
 @click.option(
-    "--bias_input_frame",
-    type=click.Choice(["base", "camera", "tcp"]),
-    default="base",
-    help="Frame for manual bias input.",
+    "--gen_gripper_sdk_path",
+    default="/home/phi5090ii/CZY/arx-difussion-deploy/umi-deploy/gen_con_sdk_python_release",
+    help="Path to gen_con_sdk_python_release. Used for pure Python gripper serial control.",
 )
 @click.option(
-    "--bias_input_mode",
-    type=click.Choice(["offset", "object_center"]),
-    default="offset",
-    help="Interpret manual input as an offset vector or an object center point.",
+    "--gripper_encoder_frequency",
+    default=30.0,
+    type=float,
+    help="Gen gripper encoder/control polling frequency in Hz.",
 )
-@click.option(
-    "--disable_video_recording",
-    is_flag=True,
-    default=False,
-    help="Disable mp4 recording and keep only live policy frames in shared memory.",
-)
-@click.option(
-    "--dry_run_policy",
-    is_flag=True,
-    default=False,
-    help="Run inference and print converted actions without sending them to the robot.",
-)
-@click.option("--no_spacemouse", is_flag=True, default=False, help="Disable SpaceMouse connection if no hardware exists.")
 def main(
     input,
     config,
@@ -803,14 +376,11 @@ def main(
     runtime_calibration,
     action_z_bias,
     mirror_swap,
-    log_runtime_transforms,
-    record_bias_on_stop,
-    prompt_bias_on_stop,
-    bias_input_frame,
-    bias_input_mode,
-    disable_video_recording,
-    dry_run_policy,
-    no_spacemouse,
+    hand_eye_path,
+    hand_eye_direction,
+    gripper_serial_port,
+    gen_gripper_sdk_path,
+    gripper_encoder_frequency,
 ):
     pid = os.getpid()
     # os.sched_setaffinity(pid, [7]) # FIX: Do not pin entire multiprocessing tree to one core, causes USB V4L2 timeouts
@@ -853,6 +423,7 @@ def main(
     #     ]
     # )
     tx_robot1_robot0 = tx_left_right
+    tx_tcp_camera0 = load_hand_eye_transform(hand_eye_path, hand_eye_direction)
 
     # load checkpoint
     ckpt_path = input
@@ -928,6 +499,9 @@ def main(
             "height_threshold": -0.2,  # TODO: ncscseed to measure
             "sphere_radius": 0.1,  # TODO: need to measure
             "sphere_center": [0, -0.06, -0.185],  # TODO: need to measure
+            "gripper_serial_port": gripper_serial_port,
+            "gen_gripper_sdk_path": gen_gripper_sdk_path,
+            "gripper_encoder_frequency": gripper_encoder_frequency,
         }
     ]
     if runtime_pose_transform.enabled and len(robots_config) != 1:
@@ -1183,6 +757,7 @@ def main(
                 max_frame_staleness=max_camera_frame_staleness,
             )
             obs = env.get_obs()
+            obs = convert_obs_tcp_to_camera(obs, tx_tcp_camera0, len(robots_config))
             print(obs)
             episode_start_pose = list()
             for robot_id in range(len(robots_config)):
@@ -1230,23 +805,11 @@ def main(
                     f"Warming up video recording finished. Video stored to {env.video_dir.joinpath(str(0))}"
                 )
 
-            assert raw_action.shape[-1] == 10 * len(robots_config)
-            if runtime_pose_transform.uses_camera_frame_action:
-                policy_action = get_camera_frame_umi_action(
-                    raw_action,
-                    obs,
-                    runtime_pose_transform,
-                    action_pose_repr,
-                )
-                action = policy_action
-            else:
-                policy_action = get_real_umi_action(
-                    raw_action, policy_obs, action_pose_repr
-                )
-                action = convert_policy_action_to_env_frame(
-                    policy_action, runtime_pose_transform
-                )
-            action = apply_action_z_bias(action, action_z_bias)
+            assert action.shape[-1] == 10 * len(robots_config)
+            action = get_real_umi_action(action, obs, action_pose_repr)
+            action = convert_camera_action_to_tcp(
+                action, tx_tcp_camera0, len(robots_config)
+            )
             assert action.shape[-1] == 7 * len(robots_config)
             if log_runtime_transforms:
                 log_runtime_transform_step(
@@ -1572,6 +1135,9 @@ def main(
                         max_frame_staleness=max_camera_frame_staleness,
                     )
                     obs = env.get_obs()
+                    obs = convert_obs_tcp_to_camera(
+                        obs, tx_tcp_camera0, len(robots_config)
+                    )
                     episode_start_pose = list()
                     for robot_id in range(len(robots_config)):
                         pose = np.concatenate(
@@ -1608,6 +1174,9 @@ def main(
                             max_frame_staleness=max_camera_frame_staleness,
                         )
                         obs = env.get_obs()
+                        obs = convert_obs_tcp_to_camera(
+                            obs, tx_tcp_camera0, len(robots_config)
+                        )
                         obs_timestamps = obs["timestamp"]
                         obs_latency = time.time() - obs_timestamps[-1]
                         print(f"Obs latency {obs_latency}")
@@ -1667,38 +1236,18 @@ def main(
                                 env, GripperControlPhase.PRE_POLICY_HOLD
                             )
                             break
-                        raw_action = np.asarray(raw_action, dtype=np.float32)
-                        if runtime_pose_transform.uses_camera_frame_action:
-                            policy_action = get_camera_frame_umi_action(
-                                raw_action,
-                                obs,
-                                runtime_pose_transform,
-                                action_pose_repr,
-                            )
-                            action = policy_action
-                        else:
-                            policy_action = get_real_umi_action(
-                                raw_action, policy_obs, action_pose_repr
-                            )
-                            action = convert_policy_action_to_env_frame(
-                                policy_action, runtime_pose_transform
-                            )
-                        action = apply_action_z_bias(action, action_z_bias)
-                        
-                        # # --- FIX: Convert network's Axis-Angle back to ARX5 Native Euler (XYZ) ---
-                        # for r_idx in range(len(robots_config)):
-                        #     rot_vecs = action[:, 7*r_idx+3 : 7*r_idx+6]
-                        #     action[:, 7*r_idx+3 : 7*r_idx+6] = st.Rotation.from_rotvec(rot_vecs).as_euler('xyz')
-                        # # ----------------------------------------------------------------------
-
+                        camera_action = get_real_umi_action(
+                            raw_action, obs, action_pose_repr
+                        )
+                        action = convert_camera_action_to_tcp(
+                            camera_action, tx_tcp_camera0, len(robots_config)
+                        )
                         action_data = {
                             "action": action,
-                            "policy_action": policy_action,
+                            "camera_action": camera_action,
                             "raw_action": raw_action,
                             "action_pose_repr": action_pose_repr,
-                            "action_reference_frame": runtime_pose_transform.action_reference_frame,
-                            "action_z_bias": action_z_bias,
-                            "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
+                            "tx_tcp_camera0": tx_tcp_camera0,
                         }
                         np.save(
                             os.path.join(

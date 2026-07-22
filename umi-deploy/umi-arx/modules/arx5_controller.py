@@ -3,7 +3,6 @@ import enum
 import os
 import struct
 import sys
-from dataclasses import dataclass
 from multiprocessing.managers import SharedMemoryManager
 from typing import Optional, cast
 import numpy as np
@@ -69,11 +68,18 @@ class Arx5Controller(mp.Process):
         get_max_k: Optional[int] = None,
         verbose: bool = False,
         receive_latency: float = 0.0,
-        skip_home: bool = False,
+        gripper_serial_port: Optional[str] = None,
+        gen_gripper_sdk_path: Optional[str] = None,
+        gripper_encoder_frequency: float = 30.0,
+        gripper_baudrate: int = 921600,
     ):
         super().__init__(name="Arx5Controller")
         self.robot_ip = robot_ip
         self.robot_port = robot_port
+        self.gripper_serial_port = gripper_serial_port
+        self.gen_gripper_sdk_path = gen_gripper_sdk_path
+        self.gripper_encoder_frequency = gripper_encoder_frequency
+        self.gripper_baudrate = gripper_baudrate
 
         example = {
             "cmd": Command.SERVOL.value,
@@ -289,6 +295,8 @@ class Arx5Controller(mp.Process):
 
     # ========= main loop in process ============
     def run(self):
+        # --- Gen gripper pure Python serial interface ---
+        gripper_bus = None
         _encoder_val = [0.0]
         _encoder_lock = threading.Lock()
 
@@ -296,29 +304,48 @@ class Arx5Controller(mp.Process):
             try:
                 encoder_value = struct.unpack(">f", record_data)[0]
             except Exception as e:
-                print(f"[Arx5Controller] Encoder data handler error: {e}")
+                print(f"[Arx5Controller] Gen gripper encoder callback error: {e}")
                 return
+
             with _encoder_lock:
                 _encoder_val[0] = float(encoder_value)
 
-        gripper_bus = None
-        sdk_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "gen_con_sdk_python_release")
-        )
-        if sdk_root not in sys.path:
-            sys.path.insert(0, sdk_root)
         try:
-            from scripts.databus import DataBus
+            default_sdk_path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "..",
+                    "gen_con_sdk_python_release",
+                )
+            )
+            sdk_path = self.gen_gripper_sdk_path or default_sdk_path
+            if sdk_path not in sys.path:
+                sys.path.insert(0, sdk_path)
 
-            serial_port = os.environ.get("GEN_GRIPPER_SERIAL_PORT", "/dev/ttyDeviceLeft")
+            from scripts.databus import DataBus, find_serial_port
+
+            serial_port = self.gripper_serial_port or find_serial_port()
+            if serial_port is None:
+                raise RuntimeError(
+                    "No Gen gripper serial port found. Set gripper_serial_port "
+                    "or create /dev/ttyDeviceLeft / /dev/ttyDeviceRight."
+                )
+
             gripper_bus = DataBus(
                 tty_port=serial_port,
-                encoder_freq=30,
+                baudrate=self.gripper_baudrate,
+                encoder_freq=self.gripper_encoder_frequency,
                 encoder_callback=_encoder_cb,
             )
-            print(f"[Arx5Controller] Gen gripper Python SDK connected: {serial_port}")
+            print(
+                "[Arx5Controller] Gen gripper DataBus ready: "
+                f"{serial_port}, encoder_freq={self.gripper_encoder_frequency}Hz"
+            )
         except Exception as e:
-            print(f"[Arx5Controller] Gen gripper Python SDK disabled: {e}")
+            print(f"[Arx5Controller] Failed to initialize Gen gripper DataBus: {e}")
+            raise
+        # ---------------------------------
 
         self.robot_client = Arx5Client(self.robot_ip, self.robot_port)
         if self.skip_home:
@@ -413,41 +440,13 @@ class Arx5Controller(mp.Process):
             joint_motion_was_active = False
             while keep_running:
                 t_now = time.monotonic()
-                joint_motion_active = t_now < joint_motion_end_time
-                if joint_motion_was_active and not joint_motion_active:
-                    self.robot_client.get_state()
-                    curr_pose = self.robot_client.tcp_pose
-                    pose_interp = PoseTrajectoryInterpolator(
-                        times=np.array([t_now]), poses=np.array([curr_pose])
-                    )
-                    gripper_pos_interp = _reset_gripper_interp(t_now)
-                    self.waypoint_buffer.clear()
-                    last_waypoint_time = t_now
-                    joint_motion_was_active = False
-                    print("[Arx5Controller] Joint motion finished; Cartesian stream resumed")
-
                 pose_cmd = pose_interp(t_now)
-                scheduled_gripper_cmd = float(gripper_pos_interp(t_now)[0])
-                gripper_cmd = _resolve_gripper_command(scheduled_gripper_cmd, t_now)
+                gripper_cmd = float(gripper_pos_interp(t_now)[0])
+                gripper_cmd = float(np.clip(gripper_cmd, 0.0, 0.103))
 
-                if not joint_motion_active:
-                    try:
-                        self.robot_client.set_tcp_pose(pose_cmd, 0.0)
-                    except ValueError as e:
-                        print(f"\n[WARN] 忽略跳变动作 (ZMQ Reject): {e}")
-                        self.robot_client.get_state()
-                        curr_pose = self.robot_client.tcp_pose
-                        pose_interp = PoseTrajectoryInterpolator(
-                            times=np.array([t_now]), poses=np.array([curr_pose])
-                        )
-                        gripper_pos_interp = _reset_gripper_interp(t_now)
-                        self.waypoint_buffer.clear()
-                        last_waypoint_time = t_now
+                self.robot_client.set_tcp_pose(pose_cmd, 0.0)
                 if gripper_bus is not None:
-                    try:
-                        gripper_bus.set_target_distance(float(gripper_cmd))
-                    except Exception as e:
-                        print(f"[Arx5Controller] Gripper command failed: {e}")
+                    gripper_bus.set_target_distance(gripper_cmd)
                 state = dict()
                 for key, func_name in self.receive_keys:
                     if func_name == "gripper_pos":
@@ -738,6 +737,8 @@ class Arx5Controller(mp.Process):
             if gripper_bus is not None:
                 gripper_bus.stop()
             del self.robot_client
+            if gripper_bus is not None:
+                gripper_bus.stop()
             self.ready_event.set()
             if self.verbose:
                 print("[Arx5Controller] Controller process terminated")

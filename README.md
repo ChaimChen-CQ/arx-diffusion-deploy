@@ -105,6 +105,7 @@ python eval_offline.py -i /path/to/checkpoint.ckpt -d /path/to/dataset
 
 - 真实机器人部署前，必须先完成设备别名、CAN 接口、串口权限和相机枚举确认。
 - 离线评估结果不等价于真实执行成功率，部署前仍需要实际联调。
+- 建议将每次训练使用的数据集、checkpoint 和部署参数记录在实验日志中，便于复现。
 - `setup.txt` 里只保留了一个最小化的 CAN 启动示例，不应替代正式部署文档。
 
 ## 一句话总结
