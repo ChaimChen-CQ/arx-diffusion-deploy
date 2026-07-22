@@ -46,10 +46,6 @@ class DiffusionDiTTimmPolicy(BaseImagePolicy):
         num_inference_steps: int = 16,
         input_pertub: float = 0.1,
         train_diffusion_n_samples: int = 8,
-        # Number of conditioning tokens produced from the flat observation
-        # feature. None preserves the legacy one-token-per-observation-step
-        # behavior; newer checkpoints set this explicitly in their config.
-        n_obs_tokens: int = None,
         **kwargs,
     ):
         super().__init__()
@@ -69,8 +65,7 @@ class DiffusionDiTTimmPolicy(BaseImagePolicy):
         obs_horizon = shape_meta["obs"][
             next(k for k in shape_meta["obs"] if shape_meta["obs"][k].get("type","low_dim") == "rgb")
         ]["horizon"]
-        if n_obs_tokens is None:
-            n_obs_tokens = obs_horizon
+        n_obs_tokens = obs_horizon          # one conditioning token per obs step
 
         self.obs_proj = nn.Linear(obs_feature_dim, n_obs_tokens * n_emb)
 

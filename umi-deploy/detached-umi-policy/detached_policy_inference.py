@@ -49,8 +49,7 @@ def echo_exception():
     return "".join(tb_lines)
 
 class PolicyInferenceNode:
-    def __init__(self, ckpt_path: str, config_path: str, ip: str, port: int, device: str, lerobot: bool = False):
-        self.lerobot = lerobot
+    def __init__(self, ckpt_path: str, config_path: str, ip: str, port: int, device: str):
         self.ckpt_path = ckpt_path
         if not self.ckpt_path.endswith('.ckpt'):
             self.ckpt_path = os.path.join(self.ckpt_path, 'checkpoints', 'latest.ckpt')
@@ -71,29 +70,10 @@ class PolicyInferenceNode:
                     f.write(omegaconf.OmegaConf.to_yaml(self.cfg))
             print(f"Loading config from default path: {cfg_path}")
 
-        if self.lerobot:
-            omegaconf.OmegaConf.update(
-                self.cfg,
-                "policy.obs_encoder.lerobot_deploy",
-                True,
-                merge=False,
-                force_add=True,
-            )
-        print(f"Deployment mode: {'LeRobot/DiT' if self.lerobot else 'legacy U-Net'}")
-
         self.device = torch.device(device)
         self.policy = self.load_policy(payload)
         self.policy.to(self.device)
         self.policy.eval()
-        self.expected_obs_keys = None
-        if self.lerobot:
-            obs_shape_meta = self.cfg.policy.shape_meta.obs
-            self.expected_obs_keys = tuple(
-                key
-                for key, meta in obs_shape_meta.items()
-                if not bool(meta.get("ignore_by_policy", False))
-            )
-            print(f"Policy observation keys: {list(self.expected_obs_keys)}")
         self.ip = ip
         self.port = port
 
@@ -104,14 +84,10 @@ class PolicyInferenceNode:
         workspace = cls(self.cfg)
         workspace.load_payload(payload, exclude_keys=None, include_keys=None)
         
-        # Match the training/evaluation workspace: use EMA weights whenever the
-        # checkpoint config enables EMA, otherwise use the raw model weights.
-        if self.lerobot and bool(self.cfg.training.get("use_ema", False)) and getattr(workspace, "ema_model", None) is not None:
-            policy = workspace.ema_model
-            print("[INFO] 已按训练配置加载 workspace.ema_model")
-        elif hasattr(workspace, 'model'):
+        # --- 兼容性修复：针对 DiT 模型，优先寻找 .model 属性 ---
+        if hasattr(workspace, 'model'):
             policy = workspace.model
-            print("[INFO] 已加载 workspace.model")
+            print("[INFO] 检测到 DiT 架构，已成功引用 workspace.model")
         elif hasattr(workspace, 'policy'):
             policy = workspace.policy
             print("[INFO] 检测到 Unet 架构，已成功引用 workspace.policy")
@@ -123,18 +99,6 @@ class PolicyInferenceNode:
 
     def predict_action(self, obs_dict_np: dict):
         with torch.no_grad():
-            if self.lerobot:
-                missing_keys = [
-                    key for key in self.expected_obs_keys if key not in obs_dict_np
-                ]
-                if missing_keys:
-                    raise KeyError(
-                        f"Missing policy observation keys: {missing_keys}; "
-                        f"received: {sorted(obs_dict_np.keys())}"
-                    )
-                obs_dict_np = {
-                    key: obs_dict_np[key] for key in self.expected_obs_keys
-                }
             obs_dict = dict_apply(obs_dict_np, lambda x: torch.from_numpy(x).unsqueeze(0).to(self.device))
             result = self.policy.predict_action(obs_dict)
             action = result['action_pred'][0].detach().to('cpu').numpy()
@@ -170,9 +134,8 @@ class PolicyInferenceNode:
 @click.option('--ip', default="0.0.0.0")
 @click.option('--port', default=8766, help="Port to listen on")
 @click.option('--device', default="cuda:0")
-@click.option('--lerobot/--no-lerobot', default=False, help='Enable LeRobot/DiT deployment compatibility. Default keeps the legacy U-Net path.')
-def main(input, config, ip, port, device, lerobot):
-    node = PolicyInferenceNode(input, config, ip, port, device, lerobot=lerobot)
+def main(input, config, ip, port, device):
+    node = PolicyInferenceNode(input, config, ip, port, device)
     node.run_node()
 
 if __name__ == "__main__":

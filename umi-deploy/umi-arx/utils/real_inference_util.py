@@ -362,7 +362,6 @@ def get_real_umi_obs_dict(
     obs_pose_repr: str = "abs",
     tx_robot1_robot0: np.ndarray = None,
     episode_start_pose: List[np.ndarray] = None,
-    include_wrt_start: bool = True,
 ) -> Dict[str, np.ndarray]:
     obs_dict_np = dict()
     # process non-pose
@@ -486,19 +485,10 @@ def get_real_umi_obs_dict(
             )
 
             rel_obs_pose = mat_to_pose10d(rel_obs_pose_mat)
-            pos_key = f"robot{robot_id}_eef_pos_wrt_start"
-            rot_key = f"robot{robot_id}_eef_rot_axis_angle_wrt_start"
-            # Only synthesize episode-start-relative observations when the
-            # policy shape_meta explicitly requests them. The LeRobot DiT
-            # configuration intentionally omits these progress-leaking fields.
-            if include_wrt_start:
-                # Historical U-Net deployment behavior.
-                obs_dict_np[rot_key] = rel_obs_pose[:, 3:]
-            else:
-                if pos_key in obs_shape_meta:
-                    obs_dict_np[pos_key] = rel_obs_pose[:, :3]
-                if rot_key in obs_shape_meta:
-                    obs_dict_np[rot_key] = rel_obs_pose[:, 3:]
+            # obs_dict_np[f'robot{robot_id}_eef_pos_wrt_start'] = rel_obs_pose[:,:3]
+            obs_dict_np[f"robot{robot_id}_eef_rot_axis_angle_wrt_start"] = rel_obs_pose[
+                :, 3:
+            ]
 
     return obs_dict_np
 

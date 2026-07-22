@@ -773,6 +773,11 @@ def save_runtime_bias_snapshot(
     help="Disable mp4 recording and keep only live policy frames in shared memory.",
 )
 @click.option(
+    "--save_policy_io_debug/--no_save_policy_io_debug",
+    default=False,
+    help="Synchronously save per-inference observation/action .npy files. Disabled by default to avoid control-loop latency.",
+)
+@click.option(
     "--dry_run_policy",
     is_flag=True,
     default=False,
@@ -809,6 +814,7 @@ def main(
     bias_input_frame,
     bias_input_mode,
     disable_video_recording,
+    save_policy_io_debug,
     dry_run_policy,
     no_spacemouse,
 ):
@@ -1619,7 +1625,7 @@ def main(
                             )
 
                         # run inference
-                        s = time.time()
+                        pipeline_start = time.monotonic()
                         policy_obs = convert_env_obs_to_policy_frame(
                             obs, runtime_pose_transform
                         )
@@ -1634,26 +1640,33 @@ def main(
                             log_policy_obs_image_stats(
                                 obs_dict_np, prefix="[OBS_DEBUG policy]"
                             )
-                        obs_data = {
-                            "obs_dict_np": obs_dict_np,
-                            "obs_pose_rep": obs_pose_rep,
-                            "obs": obs,
-                            "policy_obs": policy_obs,
-                            "episode_start_pose": episode_start_pose,
-                            "policy_episode_start_pose": policy_episode_start_pose,
-                            "tx_robot1_robot0": tx_robot1_robot0,
-                            "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
-                        }
-                        np.save(
-                            os.path.join(
-                                output, "obs", f"{episode_id}", f"{iter_idx}.npy"
-                            ),
-                            obs_data,
-                            allow_pickle=True,
-                        )
+                        obs_ready_time = time.monotonic()
+                        debug_save_time = 0.0
+                        if save_policy_io_debug:
+                            debug_save_start = time.monotonic()
+                            obs_data = {
+                                "obs_dict_np": obs_dict_np,
+                                "obs_pose_rep": obs_pose_rep,
+                                "obs": obs,
+                                "policy_obs": policy_obs,
+                                "episode_start_pose": episode_start_pose,
+                                "policy_episode_start_pose": policy_episode_start_pose,
+                                "tx_robot1_robot0": tx_robot1_robot0,
+                                "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
+                            }
+                            np.save(
+                                os.path.join(
+                                    output, "obs", f"{episode_id}", f"{iter_idx}.npy"
+                                ),
+                                obs_data,
+                                allow_pickle=True,
+                            )
+                            debug_save_time += time.monotonic() - debug_save_start
 
+                        network_start = time.monotonic()
                         socket.send_pyobj(obs_dict_np)
                         raw_action = socket.recv_pyobj()
+                        network_end = time.monotonic()
                         if type(raw_action) == str:
                             print(
                                 f"Inference from PolicyInferenceNode failed: {raw_action}. Please check the model."
@@ -1691,23 +1704,36 @@ def main(
                         #     action[:, 7*r_idx+3 : 7*r_idx+6] = st.Rotation.from_rotvec(rot_vecs).as_euler('xyz')
                         # # ----------------------------------------------------------------------
 
-                        action_data = {
-                            "action": action,
-                            "policy_action": policy_action,
-                            "raw_action": raw_action,
-                            "action_pose_repr": action_pose_repr,
-                            "action_reference_frame": runtime_pose_transform.action_reference_frame,
-                            "action_z_bias": action_z_bias,
-                            "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
-                        }
-                        np.save(
-                            os.path.join(
-                                output, "action", f"{episode_id}", f"{iter_idx}.npy"
-                            ),
-                            action_data,
-                            allow_pickle=True,
+                        postprocess_end = time.monotonic()
+                        if save_policy_io_debug:
+                            debug_save_start = time.monotonic()
+                            action_data = {
+                                "action": action,
+                                "policy_action": policy_action,
+                                "raw_action": raw_action,
+                                "action_pose_repr": action_pose_repr,
+                                "action_reference_frame": runtime_pose_transform.action_reference_frame,
+                                "action_z_bias": action_z_bias,
+                                "runtime_pose_transform": runtime_pose_transform.to_debug_dict(),
+                            }
+                            np.save(
+                                os.path.join(
+                                    output, "action", f"{episode_id}", f"{iter_idx}.npy"
+                                ),
+                                action_data,
+                                allow_pickle=True,
+                            )
+                            debug_save_time += time.monotonic() - debug_save_start
+                        print(
+                            "[LATENCY] obs_prep={:.3f}s policy_rtt={:.3f}s "
+                            "postprocess={:.3f}s debug_save={:.3f}s total={:.3f}s".format(
+                                obs_ready_time - pipeline_start,
+                                network_end - network_start,
+                                postprocess_end - network_end,
+                                debug_save_time,
+                                time.monotonic() - pipeline_start,
+                            )
                         )
-                        print("Inference latency:", time.time() - s)
 
                         # convert policy action to env actions
                         this_target_poses = action.copy()
