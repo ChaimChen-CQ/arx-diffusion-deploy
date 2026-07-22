@@ -230,7 +230,10 @@ class ReplayBuffer:
             if_exists='replace', 
             **kwargs):
         
-        root = zarr.group(store)
+        try:
+            root = zarr.group(store, zarr_format=2)
+        except TypeError:
+            root = zarr.group(store)
         if self.backend == 'zarr':
             # recompression free copy
             n_copied, n_skipped, n_bytes_copied = zarr.copy_store(
@@ -244,7 +247,8 @@ class ReplayBuffer:
                     name=key,
                     data=value, 
                     shape=value.shape, 
-                    chunks=value.shape)
+                    chunks=value.shape,
+                    dtype=value.dtype)
         
         # save data, chunk
         data_group = root.create_group('data', overwrite=True)
@@ -271,8 +275,10 @@ class ReplayBuffer:
                 _ = data_group.array(
                     name=key,
                     data=value,
+                    shape=value.shape,
                     chunks=cks,
-                    compressor=cpr
+                    compressor=cpr,
+                    dtype=value.dtype
                 )
         return store
 
