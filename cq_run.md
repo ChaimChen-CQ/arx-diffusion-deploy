@@ -45,7 +45,7 @@ cd /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/umi-deploy/umi-arx
 GEN_GRIPPER_SERIAL_PORT=/dev/ttyUSB0 python scripts/eval_arx5.py \
   -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260714/latest.ckpt \
   -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260714/latest.yaml \
-  -o data_local/eval_unet_20260714 \
+  -o data_local/eval_latest_debug_gripperfix \
   --policy_ip 127.0.0.1 \
   --policy_port 8766 \
   --frequency 8 \
@@ -57,4 +57,5 @@ GEN_GRIPPER_SERIAL_PORT=/dev/ttyUSB0 python scripts/eval_arx5.py \
   --log_runtime_transforms \
   --action_z_bias -0.015
 ```
+
 

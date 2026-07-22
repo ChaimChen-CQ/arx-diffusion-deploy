@@ -28,11 +28,12 @@ conda activate umi-cu128-py311
 cd /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/umi-deploy/detached-umi-policy
 
 python detached_policy_inference.py \
-  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260721/latest.ckpt \
-  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260721/latest.yaml \
+  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260722/latest.ckpt \
+  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260722/latest.yaml \
   --ip 0.0.0.0 \
   --port 8766 \
-  --device cuda
+  --device cuda \
+  --lerobot
 ```
 
 ## 终端 3：运行机器人
@@ -43,8 +44,8 @@ conda activate umi-arx
 cd /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/umi-deploy/umi-arx
 
 GEN_GRIPPER_SERIAL_PORT=/dev/ttyUSB0 python scripts/eval_arx5.py \
-  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260721/latest.ckpt \
-  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260721/latest.yaml \
+  -i /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260722/latest.ckpt \
+  -c /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/trained_ckpt/tron1_gripper_20260722/latest.yaml \
   -o data_local/eval_nyx_20260721 \
   --policy_ip 127.0.0.1 \
   --policy_port 8766 \
@@ -55,5 +56,6 @@ GEN_GRIPPER_SERIAL_PORT=/dev/ttyUSB0 python scripts/eval_arx5.py \
   --disable_video_recording \
   --command_latency 0.2 \
   --log_runtime_transforms \
-  --action_z_bias -0.015
+  --action_z_bias -0.015 \
+  --lerobot
 ```

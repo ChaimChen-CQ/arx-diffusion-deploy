@@ -1,48 +1,5 @@
 # MCAP 目录转换
 
-## 0. 启动 Matrix Studio 容器
-
-以下命令在宿主机执行。当前使用的 Matrix Studio 镜像是：
-
-```text
-imagepublic.genrobotai.com/genrobot/matrix-studio:0.2.15
-```
-
-当前用户如果没有 Docker 权限，需要使用 `sudo`：
-
-```bash
-cd /home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy
-
-sudo ./start_studio_sdk.sh \
-  --image-name imagepublic.genrobotai.com/genrobot/matrix-studio:0.2.15
-```
-
-启动脚本会把宿主机目录：
-
-```text
-/home/chaim/Desktop/umi-on-tron/nyx/arx-difussion-deploy/data
-```
-
-挂载到容器目录：
-
-```text
-/app/data
-```
-
-进入容器后，终端提示符通常类似 `root@容器ID:/app#`。确认 CQ 数据和
-VIO 脚本都能访问：
-
-```bash
-ls /app/data/CQ | head
-ls /app/scripts/process_mcap_inner.sh
-```
-
-如果容器已经存在但处于停止状态，可以在宿主机执行：
-
-```bash
-sudo docker start -ai matrix-studio
-```
-
 ## 1. 批量生成 VIO
 
 启动 Matrix Studio 容器后，在容器中执行：

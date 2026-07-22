@@ -232,10 +232,6 @@ class Arx5Env:
                 robot_port=rc["robot_port"],
                 frequency=200,
                 verbose=True,
-                gripper_serial_port=rc.get("gripper_serial_port"),
-                gen_gripper_sdk_path=rc.get("gen_gripper_sdk_path"),
-                gripper_encoder_frequency=rc.get("gripper_encoder_frequency", 30.0),
-                gripper_baudrate=rc.get("gripper_baudrate", 921600),
             )
             robots.append(this_robot)
 
